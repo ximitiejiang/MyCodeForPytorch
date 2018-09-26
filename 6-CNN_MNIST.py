@@ -25,7 +25,7 @@ data_test = datasets.MNIST(root = '/Users/suliang/MyDatasets/MNIST/',
                            transform = transform,
                            train = False)
 
-# 对数据进行打包成batch,设置shuffle=true则会随机输出batch
+# 对数据进行分包成batch,设置shuffle=true则会随机输出batch
 data_loader_train = torch.utils.data.DataLoader(dataset = data_train,
                                                 batch_size = 64,
                                                 shuffle = True)
@@ -56,6 +56,7 @@ class Model(torch.nn.Module):
                                          torch.nn.Conv2d(64,128,kernel_size=3,stride=1,padding=1),
                                          torch.nn.ReLU(),
                                          torch.nn.MaxPool2d(stride=2, kernel_size=2))
+        
         self.dense = torch.nn.Sequential(torch.nn.Linear(14*14*128,1024),
                                          torch.nn.ReLU(),
                                          torch.nn.Dropout(p=0.5),
@@ -96,15 +97,7 @@ for epoch in range(epoch_n):
         
         running_loss += loss.data[0]
         
-        
-        
-        
-        
-
-    
-
-    
-    
+   
     y_pred = models(x)   # 
     
     loss = loss_fn(y_pred, y)

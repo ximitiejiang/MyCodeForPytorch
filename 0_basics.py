@@ -100,31 +100,67 @@ print(x[1][2])
 x[0][1] = 8   # 可以直接赋值
 print(x)
 
+print(x[:,1])  # 跟numpy一样的高级切片方式
+print(x[:,1].size())
+
 
 '''
 Q. 如何对tensor内的元素进行计算？
 '''
-# 可以使用.zero()函数，.abs()函数等
-# 需要注意带后缀下划线的函数是在原tensor上直接修改，而不带后缀下划线的函数是在新的tensor操作
+# 计算清零
 a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
 a.zero_()  # 用0填充tensor, 只有一种带后缀的方式，修改原tensor
 print(a)
 
+# 计算size()
+print(a.size())  # 获得tensor的size形状
+
+# 计算绝对值
+# 需要注意带后缀下划线的函数是在原tensor上直接修改，
+# 而不带后缀下划线的函数是在新的tensor操作
 b = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
 b.abs()   # 不带后缀，不修改原tensor
 print(b)
 b.abs_()  # 带后缀，修改原tensor
 print(b)
 
+# 计算加法
+a = torch.FloatTensor([1,2,3])
+b = torch.FloatTensor([3,2,1])
+c = a + b
+print(c)
+
+# 计算点积
 a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-b = torch.FloatTesnor([[1,2],[2,1],[0,1]])
-a.mm(b)
+b = torch.FloatTensor([[1,2],[2,1],[0,1]])
+c = a.mm(b)
+print(c)
 
-lst = a.tolist()  # 把tensor转化为list
-print(lst)
+# 如果tensor不支持的操作，可先转换成numpy运算，再转换回tensor
+a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
+an = a.numpy()  # 把tensor转化为numpy
+at = torch.from_numpy(an)  # 把numpy转化为tensor
 
-trs = a.t()  # tensor转秩
-print(trs)
+an[0,0] = 10   # tensor与array共享内存，所以任何一个变化会引起另一个变化
+print(an)
+print(at)
+
+# 矩阵的转秩
+b = a.t()  # tensor转秩
+print(a)
+print(b)
+
+# 计算幂次  ???
+a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
+b = a.pow()
+
+# 计算求和/求平均/求最大
+a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
+b = a.sum()  # 求和
+c = a.mean() # 求平均
+d = a.max()  # 求最大
+print(d)
+
 
 
 '''
@@ -139,6 +175,7 @@ Q. 如何使用pytorch自带的自动梯度计算？
 # 但注意的是autograd计算梯度只能针对标量tensor，也就是backward()函数只能给标量tensor用.
 # loss都是标量，所以大多数情况都是loss.backward()
 # 反向传播后，会更新leaf variable即叶子节点的梯度，而不会更新父节点梯度
+# 反向传播的梯度会累加，所以
 import torch
 from torch.autograd import Variable
 w1 = Variable(torch.randn(2, 3), requires_grad = True)
@@ -146,12 +183,12 @@ print(w1)
 print(w1.data)
 print(w1.grad)  # 此时还没有反向传播计算，所以梯度为none
 
-loss = torch.mean(w1)
+loss = torch.sum(w1)
 print(loss)   
 loss.backward()   # 用于backward()的对象loss必须是标量，否则报错
 print(loss.grad)  # loss不是叶子节点，不会更新grad
 print(w1.grad)
-w1.grad.zero_()
+w1.grad.zero_()   # 对梯度清零,避免梯度不必要的累加
 print(w1.grad)
 
 # 如果要求向量自动求梯度，需要传入梯度计算参数给backward()函数
@@ -169,6 +206,7 @@ Q. 如何测试Variable类的基本属性?（综合理解variable, grad, backwar
 # x.data  为封装的tensor值
 # x.grad  初始化时grad=0, 运行了y.backward()方法后，该grad值就会更新
 # 调用backward()逻辑：如果调用y.backward()方法，就会对y的计算图中requires_grad=True的所有变量x求导dy/dx
+# 把y的计算图理解为一棵树，y为父节点，下面有很多叶子节点，叶子结点的梯度会在反向传播中更新。
 
 import torch
 from torch.autograd import Variable
@@ -301,12 +339,50 @@ data_train = datasets.MNIST(root = '/Users/suliang/MyDatasets/MNIST/',
                             transform = transform,
                             train = True,
                             download = False)
-# 再对数据进行分包：采用自带DataLoader()函数得到一个特殊可迭代的数据对象
+# 对单个数据的调用
+image,label = data_train[10]
+
+# 如果希望分batch，则可借助DataLoader对数据进行分包和随机发送
 data_loader_train = torch.utils.data.DataLoader(dataset = data_train,
                                                 batch_size = 64,
                                                 shuffle = True)
-# 最后就可以自己调用：以下是调用了随机的第一个batch
+# 对分包的调用
 images, labels = next(iter(data_loader_train))
+
+
+'''
+Q. 如何理解pytorch自带的分包工具DataLoader?
+'''
+# dataloader生成的是一个可迭代对象，调用dataloader数据的方法有很多种
+# 1. 一次获得一个batch包
+images, labels = next(iter(testloader))  
+# 2. 循环获得每个batch包
+for data in testloader:
+    images, labels = data
+# 3. 循环获得每个batch包并获得序号    
+for i, data in enumerate(trainloader, 0):
+    inputs, labels = data
+
+
+'''
+Q. 如何显示图片？
+'''
+# 单张图片：获取 - 还原 - 转秩 - 显示
+import matplotlib.pyplot as plt
+import numpy as np
+data, label = trainset[102]   # tensor
+data = data*0.5 + 0.5 
+data = np.transpose(data, (1,2,0))  # 转秩，从CxHxW变为HxWxC
+plt.imshow(data)
+
+# 多张图片：获取 - 还原 - 拼接 - 转秩 - 显示
+import matplotlib.pyplot as plt
+import numpy as np
+data, label = next(iter(trainloader))   # size = 4x3x32x32
+data = data*0.5 + 0.5
+data = torchvision.utils.make_grid(data)  # size = 3x36x138
+data = np.transpose(data, (1,2,0))
+plt.imshow(data)
 
 
 

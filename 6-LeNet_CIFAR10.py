@@ -4,6 +4,8 @@
 Created on Wed Sep 26 09:49:10 2018
 
 @author: suliang
+
+参考‘深度学习框架pytorch入门与实践’ chapter-2, 正确率53%
 """
 
 import torch

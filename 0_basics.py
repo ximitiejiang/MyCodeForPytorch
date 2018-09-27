@@ -15,27 +15,9 @@ pytorch的基础知识整理：Variable-->autograd-->
     * 最大池化层
     * 
 
-2. 新建数据类型
-    * torch.FloatTensor(2,3)    浮点数
-    * torch.IntTensor([2,3,4])   整数
-    * torch.Tensor([1,2,3])     随意指定生成内容
-    * torch.from_numpy([1,2,3])
+
     
-    * torch.rand(2,3)   随机浮点数, 均匀分布，(0, 1)之间
-    * torch.randn(2,3)   随机浮点数, 标准正态分布，0均值，1方差
-    * torch.range(1,20,1)   顺序数
-    * torch.zeros(2,3)
-    
-3. 数据计算
-    * torch.abs(a)   取绝对值
-    * torch.add(a,b)   相加(对应位置相加)
-    * torch.clamp(a, -0.1, 0.1)   裁剪数据，超出裁剪边界的数据重写为裁剪边界
-    * torch.div(a,b)   相除(对应位置相除)
-    * torch.pow(a,2)    求幂(按位求幂)
-    * torch.mul(a,b)    相乘，按位置相乘
-    * torch.mm(a,b)    相乘，矩阵的点积
-      a.mm(b)    也代表a与b的点积，这两种方法都可以
-    * torch.mv(a,vec)    相乘，矩阵与向量的点积
+
 
 4. 梯度自动计算
     * Variable    用于对tensor数据进行封装，从而可以使用系统的自动梯度计算
@@ -79,33 +61,52 @@ pytorch的基础知识整理：Variable-->autograd-->
 #--------------Open issue---------------------
 '''
 Q. 如何定义基本的tensor?
+- tensor是什么？tensor跟array基本没有区别，所以pytorch基本可以替代numpy了，你不再需要import numpy as np
+- tensor有2部分组成：一部分是tensor.data, 另一部分是tensor.grad
+- 有7种基本的CPU tensor：torch.FloatTensor/torch.DoubleTensor/torch.ByteTensor/torch.CharTensor/torch.ShortTensor/torch.IntTensor/torch.LongTensor
+- 最常用的2种：torch.FloatTensor, torch.IntTensor
+- 默认的torch.Tensor()是是FloatTensor
 '''
-# 有7种基本的CPU tensor：torch.FloatTensor/torch.DoubleTensor/torch.ByteTensor/torch.CharTensor/torch.ShortTensor/torch.IntTensor/torch.LongTensor
-# 最常用的2种：torch.FloatTensor, torch.IntTensor
-# 默认的是FloatTensor可简写为torch.Tensor()
-a = torch.FloatTensor([[1, 2, 3], [4, 5, 6]])
-print(a)
+a = torch.FloatTensor([[1, 2, 3], [4, 5, 6]]) # 浮点数tensor
 
-b = torch.IntTensor(2, 4).zero_()
-print(b)
+b = torch.IntTensor(2, 4).zero_()  # 整数tensor
+
+c = torch.Tensor([[1,2,3],[4,5,6]])  # 浮点数tensor简化新建
+
+d = torch.ones(2,3)  # 全1tensor
+d = torch.zeros(2,3) # 全0tensor
+d = torch.eye(3,3)   # 主对角线全1tensor
+d = torch.arange(0,10,2)      # 从0-10取值, 间隔2
+d = torch.linspace(0,10,5)  # 从0-10取值, 取5份
+d = torch.rand(2,3)   # 随机-0-1之间的均匀分布
+d = torch.randn(2,3)  # 随机-标准0-1正态分布(均值0，方差1)
+d = torch.randperm(6) # 随机0-n的整数排列 
 
 
 '''
 Q. 如何对tensor进行切片?
 '''
 import torch
-x = torch.FloatTensor([[1, 2, 3], [4, 5, 6]]) #类似于对list的多维切片,似乎也支持numpy的高级切片写法
-print(x[1][2])
+x = torch.FloatTensor([[1, 0, 3], [4, 5, 6]]) 
+print(x[1][2])  #类似于对list的原始多维切片
 
-x[0][1] = 8   # 可以直接赋值
+x[0][1] = 8   # 可以直接切片赋值
 print(x)
 
 print(x[:,1])  # 跟numpy一样的高级切片方式
 print(x[:,1].size())
 
+z = x > 1   # 条件筛选切片: 返回符合条件=1的0-1矩阵
+z = x[x>3]  # 条件筛选切片: 返回符合条件的值
+z = x[x!=0]
+
+
 
 '''
 Q. 如何对tensor内的元素进行计算？
+- 基本上所有tensor都支持两类接口: t1.func(), t.func(a)，其中t1.func()这种后置式的更方便常用
+- 函数名以下划线结尾的都是inplace方式，即会修改原始tensor，比如a.zero_(), b.abs_()
+
 '''
 # 计算清零
 a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
@@ -113,33 +114,35 @@ a.zero_()  # 用0填充tensor, 只有一种带后缀的方式，修改原tensor
 print(a)
 
 # 计算size()
-print(a.size())  # 获得tensor的size形状
+print(a.shape)    # 跟numpy一样，用shape不用加括号，最简洁
+print(a.size()[1])  # 获得tensor的size形状
 
-# 计算绝对值
-# 需要注意带后缀下划线的函数是在原tensor上直接修改，
-# 而不带后缀下划线的函数是在新的tensor操作
+# 计算绝对值/平方根/除法/对数
 b = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-b.abs()   # 不带后缀，不修改原tensor
-print(b)
-b.abs_()  # 带后缀，修改原tensor
-print(b)
-
-# 计算加法
-a = torch.FloatTensor([1,2,3])
-b = torch.FloatTensor([3,2,1])
-c = a + b
-print(c)
+z = b.abs()   # 不带后缀，不修改原tensor
+z = b.abs_()  # 带后缀，修改原tensor
+c = torch.Tensor([4,16])
+z = c.sqrt()  # 开方
+z = c.div(2)  # 除法
+z = c.exp()   # e的指数
+z = c.log()   # 对数
+z = c.pow(2)  # 幂次
+z = c**2      # 平方
+z = c + c     # 加法
+z = c*c       # 按位相乘
+z = c.mul(c)  # 按位相乘
 
 # 计算点积
 a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
 b = torch.FloatTensor([[1,2],[2,1],[0,1]])
-c = a.mm(b)
+c = a.mm(b) # 点积
 print(c)
 
-# 如果tensor不支持的操作，可先转换成numpy运算，再转换回tensor
+# 格式转换
 a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
 an = a.numpy()  # 把tensor转化为numpy
 at = torch.from_numpy(an)  # 把numpy转化为tensor
+b = a.tolist()  # tensor to list
 
 an[0,0] = 10   # tensor与array共享内存，所以任何一个变化会引起另一个变化
 print(an)
@@ -150,10 +153,6 @@ b = a.t()  # tensor转秩
 print(a)
 print(b)
 
-# 计算幂次  ???
-a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-b = a.pow()
-
 # 计算求和/求平均/求最大
 a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
 b = a.sum()  # 求和
@@ -161,10 +160,57 @@ c = a.mean() # 求平均
 d = a.max()  # 求最大
 print(d)
 
+# 取整/求商/取余
+a = torch.FloatTensor([1.75,3.1415])
+b = a.round()  # 四舍五入
+b = a.ceil()   # 上取整
+b = a.floor()  # 下取整
+b = a%2
+
+# 截断
+a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
+b = a.clamp(2,4)  # 2,4之间的值，超出的则取2，4
+
+# 调整tensor的形状
+a = torch.arange(0,6)
+b = a.view(2,3)   # view相当于python中的reshape()
+c = a.view(-1,2)  # view相当于python中的reshape()
+d = a.resize(3,1)  # 据说跟view的差别在于他可以修改tensor原尺寸，但实验没成功
+
+d = b.unsqueeze(1)  # 待测试
+
+# tensor转标量: 往往需要指定dim, 相当于numpy中的axis
+# dim(axis)等于哪个轴，该轴变为1，也就是沿着该轴挤压(或叫沿着该轴坍缩)
+# 比如(2,3,2) dim=1就会变成(2,1,2)
+a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
+z = a.mean()  # 均值
+z = a.sum(dim=1)   # 求和
+z = a.median()  # 中位数
+z = a.mode()    # 众数
+z = a.var()    # 方差
+z = a.std()    # 标准差 = 方差的开方
 
 
 '''
-Q. 如何使用pytorch自带的自动梯度计算？
+Q. 如何在pytorch中实现手动广播法则/调整张量的维度？
+'''
+a = torch.ones(3,2)
+b = torch.zeros(2,3,1)
+a.expend(2,3,2)
+
+x = torch.linspace(-1, 1, 5)  # 初始tensor: 一维，5
+y = torch.unsqueeze(x, dim=1)  # 扩维：二维，5x1
+z = x.view(-1,1)           # 扩维：二维，5x1
+
+
+'''
+Q. 如何使用pytorch自带的自动梯度autograd计算？
+- 所有深度学习框架都是基于计算图，pytorch基于计算图开发了反向传播自动求导引擎
+  能够根据输入/前向传播过程，来自动构建计算图，自动反向传播，自动求导
+- 用户需要把tensor封装成variable：variable中包括三个东西data/grad/grad_fn
+- 用户需要创建前向传播过程：设计forward()函数
+- 用户需要调用根结点的backward()方法：调用y.backward()函数
+- pytorch就会构建计算图，反向传播计算，对叶子节点自动求导
 '''
 # 只需要导入Variable类对tensor进行封装，然后对标量父节点执行backward()函数
 # 就会沿着计算图的树结构求解叶子结点的梯度,。
@@ -172,10 +218,7 @@ Q. 如何使用pytorch自带的自动梯度计算？
 # Variable类跟tensor类几乎一样，API也几乎一样，所有tensor换成variable一般也能正常运行。
 # 可以把Variable理解成是tensor的一个wrapper，在tensor基础上增加了grad和创建该variable的function
 # 所以variable可以在backward()运行后自动更新梯度
-# 但注意的是autograd计算梯度只能针对标量tensor，也就是backward()函数只能给标量tensor用.
-# loss都是标量，所以大多数情况都是loss.backward()
-# 反向传播后，会更新leaf variable即叶子节点的梯度，而不会更新父节点梯度
-# 反向传播的梯度会累加，所以
+
 import torch
 from torch.autograd import Variable
 w1 = Variable(torch.randn(2, 3), requires_grad = True)
@@ -196,6 +239,63 @@ a = Variable(torch.rand(1,3),requires_grad=True)
 b = a*a
 print(b)
 b.backward([1,1,1])
+
+
+'''
+Q. 如何自动求导的细节分析
+* 首先要对tensor封装成variable, 把variable理解成一个函数
+    - tensor由2部分组成：data, grad；variable由3部分组成：data, grad, grad_fn
+    - 一般只需要把叶子结点设置为Variable，从计算过程就会自动把中间节点和根结点都变成variable
+    - 一般只需要把待求解的叶子节点设置为自动求导，从计算过程就会把必要的中间节点和根结点都定为自动求导
+
+* variable()函数：
+    - 核心参数1: requires_grad(默认为False), 为True则会自动求导
+    - 只要设置了某一叶节点的requires_grad，自动会把跟他串联的节点都设置
+      比如a要求导，则串联出a-c-d自动设置求导，而b不需要自动求导
+    - 核心参数2: volatile(默认为False), 在新版pytorch中已经取消这个变量
+
+* backward()函数：
+    - 单次数据输入对应单次前向计算和单次backward，然后系统自动释放buffer，不能再次执行backward
+    - 核心参数1: grad_variables = None
+    - 如果要单次输入多次执行backward，需设置backward(grad_variables=True)
+    - 核心参数2: retain_graph = None
+'''
+# forward函数内容(a,b)->c->d
+a = Variable(torch.ones(3,4),requires_grad = True)
+b = Variable(torch.zeros(3,4))
+c = a.add(b)
+d = c.sum()
+# 检查串联的线上各个变量的自动求导设置和是否为叶子结点
+# a为叶结点+自动求导
+# b为叶结点+不自动求导
+# c为中间节点+自动求导
+# d为根结点+自动求导
+# 但最终，只有a的求导会保留，其他要么不求导(比如b)，要么非叶节点不保留(比如c,d)
+print(a.requires_grad, b.requires_grad, c.requires_grad, d.requires_grad)
+print(a.is_leaf, b.is_leaf, c.is_leaf, d.is_leaf)
+
+# 根节点调用backward
+print(a.grad, b.grad, c.grad, d.grad)  # backward之前，所有grad都为None
+d.backward()
+print(a.grad, b.grad, c.grad, d.grad)  # backward之后，只有叶子节点grad保留，非叶节点grad虽然也计算了，但计算完就释放掉了
+
+
+'''
+Q. 如何获得自动求导过程中不保留的中间节点的梯度值？
+'''
+# 方法1: 采用autograd.grad函数
+x = Variable(torch.ones(3), requires_grad = True)
+w = Variable(torch.rand(3), requires_grad = True)
+y = x + w
+z = y.sum()
+
+print(x.grad, w.grad, y.grad, z.grad)  # 反向传播前，梯度都为none
+z.backward()
+print(x.grad, w.grad, y.grad, z.grad)  # 反向传播后，两个叶子结点梯度保留，其他梯度释放
+z_grad = torch.autograd.grad(z,y)      # 单独求解某个中间节点变量的梯度
+print(z_grad)
+
+# 方法2: 采用hook钩子获得梯度，此处暂时留着
 
 
 '''
@@ -246,14 +346,24 @@ Q. 如何定义每种特殊的层？
 import torch
 torch.nn.Linear()
 
+# 全联接层
+dens = torch.nn.Linear(14*14*128,1024)
+
+
 # 二维卷积层
-m = torch.nn.Conv2d(64,128,kernel_size=3,stride=1,padding=1)
+# 参数(in_channels,out_channels,kernel_size,strid=1,padding=0,dilation=1,groups=1,bias=True)
+# 输入：B,C,H,W
+# 变量：conv.weight
+conv = torch.nn.Conv2d(64,128,kernel_size=3,stride=1,padding=1)
+
 # 最大池化层
+# 参数(kernel_size,stride=None,padding=0,dilation=1,return_indices=False,ceil_mode=False)
+# 输入：B,C,H,W
 m = torch.nn.MaxPool2d(stride=2, kernel_size=2)
+
 # 激活层
 m = torch.nn.ReLU()
-# 全联接层
-m = torch.nn.Linear(14*14*128,1024)
+
 
 
 '''
@@ -273,7 +383,9 @@ models = torch.nn.Sequential(OrderedDict([('Line1', torch.nn.Linear(input_data, 
 
 
 '''
-Q. 如何继承一个已有pytorch的模型并应用
+Q. 如何继承一个已有pytorch的模型并应用？
+- 使用torch.nn.module，其中module是一个数据结构，可以表示某层，也可表示一个神经网络
+- 
 '''
 # 继承从torch.nn.Module这个类库中来
 import torch
@@ -383,6 +495,10 @@ data = data*0.5 + 0.5
 data = torchvision.utils.make_grid(data)  # size = 3x36x138
 data = np.transpose(data, (1,2,0))
 plt.imshow(data)
+
+
+
+
 
 
 

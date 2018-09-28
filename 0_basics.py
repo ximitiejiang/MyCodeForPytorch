@@ -5,57 +5,8 @@ Created on Sun Sep 23 21:52:36 2018
 
 @author: suliang
 
-pytorch的基础知识整理：Variable-->autograd-->
-
-1. 介绍下几个典型的卷积神经网络：
-    * 卷积层：用于对输入数据进行特征提取，主要依靠里边的卷积核，卷积核就是一个指定窗口大小的扫描器。
-    * 卷积核：
-    * 池化层：用于对输入数据的核心特征提取，可以实现对原始数据的压缩，还能大量减少参与模型计算的参数
-    * 平均池化层
-    * 最大池化层
-    * 
-
-
-    
-
-
-4. 梯度自动计算
-    * Variable    用于对tensor数据进行封装，从而可以使用系统的自动梯度计算
-    * backward()   对于Variable()变量的一个方法，针对Loss使用该方法后能够产生
-    * torch.autograd    自动梯度计算模块
-
-5. torch.nn模块库：用来创建神经网络，包含了很多基本的类
-    (1) 神经网络骨架    
-    * torch.nn.Sequential()   用来串联各层和各激活函数，是神经网络的骨骼
-    
-    (2) 线性变换
-    * torch.nn.Linear()    线性变换类，用于两层之间的线性变换
-    
-    (3) 激活函数
-    * torch.nn.ReLU()    激活函数
-    
-    (4) 损失函数
-    * torch.nn.MSELoss()    损失函数
-    * torch.nn.L1Loss()    L1正则损失函数（平均绝对误差函数）
-    * torch.nn.CrossEntropyLoss()    交叉熵损失函数
-    
-    (5) 基础模型？？？
-    * torch.nn.module
-    
-6. torch.optim模块库：用来定义求解器optimzer，包括自动优化参数，选择求解算法
-    * torch.optim.Adam()   Adam自适应梯度求解器
-    * torch.optim.SGD()
-    
-7. torchvision.transforms模块库：用来定义数据变换器transform，来进行数据变换，数据增强
-    * transforms.Compose()    用来组合各种变换方法
-    * transforms.ToTensor()    用来把PIL图片数据转换成tensor变量，便于pytorch处理
-    * transforms.ToPILImage()   用来把tensor数据转换回PIL图片，便于显示
-    * transforms.Normalize()    用来进行数据标准化
-    * transforms.Resize()
-    * transforms.Scale()
-    * transforms.CenterCrop()
-    * transforms.
-
+pytorch的基础知识整理
+ 
 """
 
 #--------------Open issue---------------------
@@ -153,6 +104,8 @@ b = a.t()  # tensor转秩
 print(a)
 print(b)
 
+# 在图像处理中，有采用transpose([1,2,0])把tensor的CxHxW转换成图像的HxWxC
+
 # 计算求和/求平均/求最大
 a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
 b = a.sum()  # 求和
@@ -198,9 +151,9 @@ a = torch.ones(3,2)
 b = torch.zeros(2,3,1)
 a.expend(2,3,2)
 
-x = torch.linspace(-1, 1, 5)  # 初始tensor: 一维，5
+x = torch.linspace(-1, 1, 5)   # 初始tensor: 一维，5
 y = torch.unsqueeze(x, dim=1)  # 扩维：二维，5x1
-z = x.view(-1,1)           # 扩维：二维，5x1
+z = x.view(-1,1)               # 扩维：二维，5x1
 
 
 '''
@@ -387,11 +340,19 @@ Q. 如何继承一个已有pytorch的模型并应用？
 - 使用torch.nn.module，其中module是一个数据结构，可以表示某层，也可表示一个神经网络
 - 
 '''
-# 继承从torch.nn.Module这个类库中来
+# 继承模型：从torch.nn.Module这个类库中来
 import torch
 class Model(torch.nn.Module):  # 定义一个类（从torch.nn.Module继承过来）
     def __init__(self):
         super(Model, self).__init__()
+        
+# 继承数据集：从torch.utils.data这个类库中来
+from torch.utils import data
+class MyDataSet(data.Dataset):
+    def __init__(self, root, transforms=None):
+        imgs = os.listdir(root)
+        self.imgs = [os.path.join(root, img) for img in imgs]
+        self.transforms = transforms
 
 
 '''
@@ -477,12 +438,53 @@ for i, data in enumerate(trainloader, 0):
 
 
 '''
+Q. 如何打开自己的数据集？
+'''
+# 针对单个图片
+from PIL import Image
+import matplotlib.pyplot as plt
+root = '/Users/suliang/MyDatasets/DogsVSCats/train/dog.8011.jpg'
+data = Image.open(root)
+plt.imshow(data)
+
+# 针对大数据集：一个文件夹
+from torch.utils import data
+class MyDataSet(data.Dataset):
+    def __init__(self, root, transforms=None):  # 拼接每个文件的地址
+        imgs = os.listdir(root)
+        self.imgs = [os.path.join(root, img) for img in imgs]
+        self.transforms = transforms
+    
+    def __getitem__(self, index):  # 基于输入index，计算label, 处理img
+        img_path = self.imgs[index]
+        label = 1 if 'dog' in img_path.split('/')[-1] else 0
+        
+        data = Image.open(img_path)
+        if self.transforms:
+            data = self.transforms(data)
+        return data, label
+    
+    def __len__(self):
+        return len(self.imgs)
+    
+root = '/Users/suliang/MyDatasets/DogsVSCats/train' 
+data_train = MyDataSet(root, transforms = None)
+img, label = data_train[2]  # 切片相当于调用__getitem__()的调用
+
+import matplotlib.pyplot as plt
+plt.imshow(img)
+
+# 针对大数据集：每一类一个文件夹
+# 此时可用ImageFolder
+
+
+'''
 Q. 如何显示图片？
 '''
 # 单张图片：获取 - 还原 - 转秩 - 显示
 import matplotlib.pyplot as plt
 import numpy as np
-data, label = trainset[102]   # tensor
+data, label = trainset[102]        # tensor 3x32x32
 data = data*0.5 + 0.5 
 data = np.transpose(data, (1,2,0))  # 转秩，从CxHxW变为HxWxC
 plt.imshow(data)
@@ -498,39 +500,97 @@ plt.imshow(data)
 
 
 '''
-Q. CNN的发展
-1998 - LeNet-5，由LeCun提出，是第一个真正意义上的卷积神经网络
-        - 首次提出了卷积，下采样，非线性激活三大特性
-        
-2012 - AlexNet，由Alex Krizhevsky，Hinton提出，
-        - 提出ReLU函数替代sigmoid函数
-        - 提出dropout技术避免过拟合
-        - 提出max pooling技术
-        
-2014 - VGGNet，由牛津大学VGG视觉几何小组提出
-        - 提出使用小卷积3x3(而不是之前的大卷积5x5或者更大)
-        
-2014 - GoogleNet，由谷歌提出
-        - 
-2014 - DeepFace, 由Taigman提出
-       DeepID, 由汤晓鸥提出
-       
-2014 - R-CNN, 由加州伯克利教授 Jitendra Malik提出
-        - ？
+Q. 如何处理文件夹的相对路径和绝对路径？
+- os.listdir: 获得目录下所有文件的文件名
+- os.path.dirname: 返回目录的目录名
+- os.path.exists: 
+- os.path.isdir: 
+- os.path.isfile: 
+- os.path.samefile: 
+- os.path.split: 拆分
+'''
+import os
 
-2015 - Fast R-CNN, 由RCNN第一作者 Ross Girshick提出
-        - 
-2015 - ResNet，由何凯明提出
-        - 解决了训练极深网络时梯度消失的问题
-2016 - Faster R-CNN, 由微软的孙剑、任少卿、何凯明、Ross Girshick提出
-        - 
-2017 - Mask R-CNN
-        - 由Facebook AI 的何凯明、Girshick提出
-        - 把Faster R-CNN拓展到像素级的图像分割
+# 生成每个文件的绝对地址
+root = '/Users/suliang/MyDatasets/DogsVSCats/train'
+imgs = os.listdir(root)   # 输入的root必须是绝对地址
+imgs = [os.path.join(root, img) for img in imgs]  # 拼接地址
 
-
+# 拆分地址，获得文件名或者部分描述
+imgs[0].split('/')[-1]   # 基于'/'拆分，并获得最后一个
+if 'dog' in imgs[0].split('/')[-1]:
+    print('this is dog!')
+    
 
 '''
+Q. 如何通过函数对图形进行变换(放大缩小，旋转，裁剪，等等)？
+'''
+# 使用transform模块，简称T模块
+# 先显示原始图片
+from PIL import Image
+import matplotlib.pyplot as plt
+root = '/Users/suliang/MyDatasets/DogsVSCats/train/dog.7014.jpg'
+data = Image.open(root)
+plt.imshow(data)
+
+from torchvision import transforms as T
+
+# transform1: 缩放和改尺寸, resize(等效于scale)
+transform1 = T.Compose([T.Resize((200,400))])  # 改为指定尺寸HxW，如果1个数则只改短边但保持长宽比不变
+new_data = transform1(data)
+plt.imshow(new_data)
+
+# transform2: 切割, CenterCrop
+transform2_1 = T.Compose([T.CenterCrop((224,400))])  # 基于中心点切出HxW图片
+new_data = transform2_1(data)
+plt.imshow(new_data)
+transform2_2 = T.Compose([T.RandomResizedCrop(224)]) # 随机切，然后再扩展成size尺寸
+new_data = transform2_2(data)
+plt.imshow(new_data)
+
+# transform3: 翻转, RandomHorizontalFlip
+transform3 = T.Compose([T.RandomHorizontalFlip()])  # 随机（0.5的概率）水平翻转
+new_data = transform3(data)
+plt.imshow(new_data)
+
+# transform4: 变为张量，ToTensor
+# - 一方面把图片HxWxC，转换为张量的CxHxW
+# - 另一方面把图片(0,255)，转换为张量(0,1)
+transform4_1 = T.Compose([T.ToTensor()])  # 图像转成tensor
+PtoT = transform4(data)
+print('tensor size: {}'.format(PtoT.shape))
+print(PtoT.min(), PtoT.max())
+
+transform4_2 = T.Compose([T.ToPILImage()])  # tensor转成图像- 也可直接用transpose
+TtoP = transform4_2(PtoT)
+plt.imshow(TtoP)
+
+TtoP = np.transpose(PtoT, (1,2,0))  # ToPILImage所做的事情跟transpose是一样的
+plt.imshow(TtoP)
+
+# transform5: 归一化，一般归一化到(-1,1), 因为
+# new_value = (value - mean)/std, 后续恢复图片也要进行归一化的逆操作
+# 归一化只针对tensor，所以ToTensor与Normalize一般一起做。
+# 由于totensor已经把value转换到(0,1), 为了标准化到(-1,1)需要合适的均值/方差
+# 简化处理是设置mean=0.5, std=0.5，即(value-0.5)/0.5得到(-1,1)的区间
+transform5 = T.Compose([T.ToTensor(),
+                        T.Normalize(mean=[0.5,0.5,0.5], std=[0.5,0.5,0.5])])
+new_data = transform5(data)
+print('tensor size: {}'.format(new_data.shape))
+print(new_data.min(), new_data.max())
+print('mean: {}, std: {}'.format(new_data.mean(), new_data.std()))
+
+# 标准化以后的数据转换回来再显示
+new_data = new_data*0.5 + 0.5
+#TtoP = np.transpose(new_data, (1,2,0)) 
+TtoP = T.ToPILImage()(new_data) # 注意这种蛋疼写法，T.xxx要么嵌套在compose()里，要么多一对括号
+plt.imshow(TtoP)
+
+
+
+
+
+
 
 
 

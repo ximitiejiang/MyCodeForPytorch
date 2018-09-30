@@ -6,10 +6,13 @@ Created on Wed Sep 26 09:49:10 2018
 @author: suliang
 
 参考‘深度学习框架pytorch入门与实践’ chapter-2, 正确率53%
+该该代码来自于pytorch官方英文教程，实现LeNet5
+
 """
 
 import torch
 import torchvision
+from torch.autograd import Variable
 from torchvision import transforms, datasets
 from torchvision.transforms import ToPILImage
 
@@ -67,6 +70,7 @@ data = data*0.5 + 0.5
 # make_grid可以把一个batch的数据重组拼接成一行，所以batch=4的图片被排列为1行
 # 变为3x32x128, 同时默认有p=2的padding，所以变为3x(32+4)x(128+10)
 data = torchvision.utils.make_grid(data)  # size = 3x36x138
+# data = T.resize(200)(data)  # 图片变大，同样显示空间像素更多了，看会不会变清楚？
 data = np.transpose(data, (1,2,0))
 plt.imshow(data)
 
@@ -82,20 +86,25 @@ class LeNet1(torch.nn.Module):
     def __init__(self):
         super(LeNet1, self).__init__()
         
-        self.conv1 = torch.nn.Conv2d(3,6,5)
-        self.conv2 = torch.nn.Conv2d(6,16,5)
+        self.conv1 = torch.nn.Conv2d(3,6,5)  # 输入3通道，输出6通道，卷积核5x5
+        self.conv2 = torch.nn.Conv2d(6,16,5) # 输入6通道，输出16通道，卷积核5x5
         
-        self.fc1 = torch.nn.Linear(16*5*5, 120)
+        self.fc1 = torch.nn.Linear(16*5*5, 120) #
         self.fc2 = torch.nn.Linear(120, 84)
         self.fc3 = torch.nn.Linear(84, 10)
         
     def forward(self, x):
+        # 1.卷积1 - 2.非线性激活 - 3.最大池化
         x = F.max_pool2d(F.relu(self.conv1(x)), (2,2))
+        # 4.卷积2 - 5.非线性激活 - 6.最大池化
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        
+        # 7.
         x = x.view(x.size()[0], -1)
+        # 8.全连接 - 9.非线性激活
         x = F.relu(self.fc1(x))
+        # 10.全连接 - 11.非线性激活
         x = F.relu(self.fc2(x))
+        # 12.全连接
         x = self.fc3(x)
         return x
 
@@ -106,8 +115,8 @@ class LeNet1(torch.nn.Module):
 net = LeNet1()
 print(net)
 
-params = list(net.parameters())
-print(len(params))
+params = list(net.parameters())  # 获得该网络所有可学习参数列表 - 已初始化，未训练
+print(len(params)) # 打印参数长度 = 10，params[0]就代表conv1的参数
 
 criteria = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(net.parameters(), lr = 0.001, momentum = 0.9)
@@ -117,7 +126,7 @@ optimizer = torch.optim.SGD(net.parameters(), lr = 0.001, momentum = 0.9)
 '''
 for epoch in range(2):
     running_loss = 0.0
-    for i, data in enumerate(trainloader, 0):
+    for i, data in enumerate(trainloader, 0): # 取出每个batch
         inputs, labels = data
         inputs, labels = Variable(inputs), Variable(labels)
         

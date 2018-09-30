@@ -13,7 +13,7 @@ pytorch的基础知识整理
 '''
 Q. 如何定义基本的tensor?
 - tensor是什么？tensor跟array基本没有区别，所以pytorch基本可以替代numpy了，你不再需要import numpy as np
-- tensor有2部分组成：一部分是tensor.data, 另一部分是tensor.grad
+- tensor有2部分组成：一部分是tensor.data, 另一部分是tensor.grad. 默认输出是t.data即t = t.data
 - 有7种基本的CPU tensor：torch.FloatTensor/torch.DoubleTensor/torch.ByteTensor/torch.CharTensor/torch.ShortTensor/torch.IntTensor/torch.LongTensor
 - 最常用的2种：torch.FloatTensor, torch.IntTensor
 - 默认的torch.Tensor()是是FloatTensor
@@ -32,6 +32,10 @@ d = torch.linspace(0,10,5)  # 从0-10取值, 取5份
 d = torch.rand(2,3)   # 随机-0-1之间的均匀分布
 d = torch.randn(2,3)  # 随机-标准0-1正态分布(均值0，方差1)
 d = torch.randperm(6) # 随机0-n的整数排列 
+
+# 如果是单元素tensor，可通过item直接转成python数据
+d = torch.Tensor([1])
+d1 = d.item()
 
 
 '''
@@ -110,8 +114,12 @@ print(b)
 a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
 b = a.sum()  # 求和
 c = a.mean() # 求平均
-d = a.max()  # 求最大
-print(d)
+d = a.min(dim=0)
+d = a.max(dim=1)  # 求最大,y方向（把数据拍成一个y轴）
+print(d[0][0], d[1][0])
+# 注意max的输出结果很特殊，第一行是最大值列表，第二行是最大值标签列表
+
+
 
 # 取整/求商/取余
 a = torch.FloatTensor([1.75,3.1415])
@@ -536,7 +544,7 @@ plt.imshow(data)
 from torchvision import transforms as T
 
 # transform1: 缩放和改尺寸, resize(等效于scale)
-transform1 = T.Compose([T.Resize((200,400))])  # 改为指定尺寸HxW，如果1个数则只改短边但保持长宽比不变
+transform1 = T.Compose([T.Resize([64,64])])  # 改为指定尺寸HxW，如果1个数则只改短边但保持长宽比不变
 new_data = transform1(data)
 plt.imshow(new_data)
 
@@ -586,6 +594,36 @@ new_data = new_data*0.5 + 0.5
 TtoP = T.ToPILImage()(new_data) # 注意这种蛋疼写法，T.xxx要么嵌套在compose()里，要么多一对括号
 plt.imshow(TtoP)
 
+
+'''
+Q. 如何使用pytorch自带的高级模型？
+- Pytorch自带了AlexNet, VGG, ResNet, Inception
+'''
+from torchvision import models
+
+alexnet = models.alexnet(pretrained = True)
+resnet18
+resnet34
+resnet50
+resnet101
+resnet152
+vgg11
+vgg16
+
+
+'''
+Q: 如何用可视化工具visdom?
+    - 启动visdom: $ python -m visdom.server
+    - 打开visdom: http://localhost:8097
+'''
+import torch as t
+import visdom
+vis = visdom.Visdom(env=u'test1')    # 构建一个客户端对象vis
+x = t.arange(1,30,0.01)          
+y = t.sin(x)
+
+vis.line(X=x, Y=y, win='sinx', opts={'title':'y=sin(x)'}) 
+#在vis里边绘制
 
 
 

@@ -446,7 +446,7 @@ for i, data in enumerate(trainloader, 0):
 
 
 '''
-Q. 如何打开自己的数据集？
+Q. 如何打开第三方的数据集？
 '''
 # 针对单个图片
 from PIL import Image
@@ -484,6 +484,16 @@ plt.imshow(img)
 
 # 针对大数据集：每一类一个文件夹
 # 此时可用ImageFolder
+data_dir = '/Users/suliang/MyDatasets/hymenoptera_data'
+# 读取数据
+image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x),
+                                          data_transforms[x])
+                  for x in ['train', 'val']}
+# 分包数据
+dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4,
+                                             shuffle=True, num_workers=4)
+              for x in ['train', 'val']}
+
 
 
 '''
@@ -595,20 +605,22 @@ TtoP = T.ToPILImage()(new_data) # 注意这种蛋疼写法，T.xxx要么嵌套�
 plt.imshow(TtoP)
 
 
+# transform6: 图像颜色高斯波动
+
+
+
 '''
 Q. 如何使用pytorch自带的高级模型？
 - Pytorch自带了AlexNet, VGG, ResNet, Inception
 '''
-from torchvision import models
+import torchvision.models as models
 
-alexnet = models.alexnet(pretrained = True)
-resnet18
-resnet34
-resnet50
-resnet101
-resnet152
-vgg11
-vgg16
+resnet18 = models.resnet18(pretrained=True)   # 下载完成
+alexnet = models.alexnet(pretrained=True)    # 下载完成
+squeezenet = models.squeezenet1_0(pretrained=True)
+vgg16 = models.vgg16(pretrained=True)
+densenet = models.densenet161(pretrained=True)
+inception = models.inception_v3(pretrained=True)
 
 
 '''

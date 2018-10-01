@@ -32,7 +32,7 @@ plt.ion()   # interactive mode
 '''
 landmarks_frame = pd.read_csv('/Users/suliang/MyDatasets/faces/face_landmarks.csv')
 
-n = 65
+n = 64
 img_name = landmarks_frame.iloc[n, 0]  # 第65行的某张图
 landmarks = landmarks_frame.iloc[n, 1:].as_matrix()  # 取出该行数据
 landmarks = landmarks.astype('float').reshape(-1, 2) # 分成2列，分别就是x坐标和y坐标

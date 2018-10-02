@@ -91,13 +91,16 @@ imshow(out, title=[class_names[x] for x in classes])
 
 '''
 函数：训练模型
+
 '''
 
 def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
     since = time.time()
-
-    best_model_wts = copy.deepcopy(model.state_dict())  # ???
-    best_acc = 0.0  
+    
+    
+    # 储存最优模型的参数（深拷贝，不会相互影响）
+    best_model_wts = copy.deepcopy(model.state_dict())  # 拷贝模型的状态字典state_dict
+    best_acc = 0.0         # 最优模型
 
     for epoch in range(num_epochs):  # 外循环：epoch个数
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -105,21 +108,23 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
         # Each epoch has a training and validation phase
         for phase in ['train', 'val']:  # 中循环： 训练集和测试集
+            # 训练集，则指定？？？
             if phase == 'train':
-                scheduler.step()
-                model.train()  # Set model to training mode
+                scheduler.step()  # ？？？
+                model.train()  # ??? Set model to training mode
+            # 测试集，则？？？
             else:
-                model.eval()   # Set model to evaluate mode
+                model.eval()   # ???? Set model to evaluate mode
 
             running_loss = 0.0
             running_corrects = 0
 
             # Iterate over data.
-            for inputs, labels in dataloaders[phase]:  # 内循环： 每一张图片
+            for inputs, labels in dataloaders[phase]:  # 内循环： 每个batch
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
-                # zero the parameter gradients
+                # 每个batch作为最小训练单元，都需要清空上一次训练的梯度
                 optimizer.zero_grad()
 
                 # forward
@@ -144,7 +149,8 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
 
-            # deep copy the model
+            # 如果新训练出的模型参数比原有最优模型参数更好，则更新
+            # 并且深拷贝模型
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
@@ -194,7 +200,7 @@ def visualize_model(model, num_images=6):
 建立模型和设置模型
 '''    
 #import torchvision.models as models
-#resnet18 = models.resnet18(pretrained=True)   # 下载完成
+resnet18 = models.resnet18(pretrained=True)   # 下载完成
 #alexnet = models.alexnet(pretrained=True)    # 下载完成
 #squeezenet = models.squeezenet1_0(pretrained=True)
 #vgg16 = models.vgg16(pretrained=True)
@@ -204,6 +210,7 @@ def visualize_model(model, num_images=6):
 # 建立迁移学习resnet18的模型和参数
 model_ft = models.resnet18(pretrained=True)
 
+print(resnet18)
 # 设置
 num_ftrs = model_ft.fc.in_features
 model_ft.fc = nn.Linear(num_ftrs, 2)

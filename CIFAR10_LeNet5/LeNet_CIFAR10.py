@@ -15,7 +15,7 @@ import torchvision
 from torch.autograd import Variable
 from torchvision import transforms, datasets
 from torchvision.transforms import ToPILImage
-
+import time
 
 ''' 
 创建数据变换器
@@ -34,6 +34,10 @@ testset = datasets.CIFAR10(root = '/Users/suliang/MyDatasets/CIFAR10/',
                            transform = transform,
                            train = False,
                            download = True)
+# 数据加载后直接使用：
+# trainset是一个可迭代对象，等效于set(data, label)
+data, label = trainset[0]
+
 # 这是已定义好顺序的标签
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 
            'dog', 'frog', 'horse', 'ship', 'truck')
@@ -94,36 +98,46 @@ class LeNet1(torch.nn.Module):
         self.fc3 = torch.nn.Linear(84, 10)
         
     def forward(self, x):
-        # 1.卷积1 - 2.非线性激活 - 3.最大池化
         x = F.max_pool2d(F.relu(self.conv1(x)), (2,2))
-        # 4.卷积2 - 5.非线性激活 - 6.最大池化
         x = F.max_pool2d(F.relu(self.conv2(x)), 2)
-        # 7.
         x = x.view(x.size()[0], -1)
-        # 8.全连接 - 9.非线性激活
         x = F.relu(self.fc1(x))
-        # 10.全连接 - 11.非线性激活
         x = F.relu(self.fc2(x))
-        # 12.全连接
         x = self.fc3(x)
         return x
 
 '''
 新建网络对象
+'''
 
-'''    
+# 初始化   
 net = LeNet1()
-print(net)
-
-params = list(net.parameters())  # 获得该网络所有可学习参数列表 - 已初始化，未训练
-print(len(params)) # 打印参数长度 = 10，params[0]就代表conv1的参数
-
 criteria = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(net.parameters(), lr = 0.001, momentum = 0.9)
+
+print(net)
+print()
+
+# 查看model.parameters()
+params = list(net.parameters())  # 获得该网络所有可学习参数列表 - 已初始化，未训练
+print(len(params)) # 打印参数长度 = 10，params[0]就代表conv1的参数
+print()
+# 查看model.state_dict()
+print("Model's state_dict:")
+for param_tensor in net.state_dict():
+    print(param_tensor, "\t", net.state_dict()[param_tensor].size())
+print()
+# 查看optimizer.state_dict()
+print("Optimizer's state_dict:")
+for var_name in optimizer.state_dict():
+    print(var_name, "\t", optimizer.state_dict()[var_name])
+print()
+
 
 '''
 训练网络
 '''
+since = time.time()
 for epoch in range(2):
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0): # 取出每个batch
@@ -143,6 +157,22 @@ for epoch in range(2):
             print('[%d, %5d] loss: %.3f' %(epoch+1, i+1, running_loss/2000))
             running_loss = 0.0
 print('finished training!')
+print('last time: {}'.format(time.time()-since))
+print()
+# 查看model.state_dict()
+print("Model's state_dict:")
+for param_tensor in net.state_dict():
+    print(param_tensor, "\t", net.state_dict()[param_tensor].size())
+print()
+# 查看optimizer.state_dict()
+print("Optimizer's state_dict:")
+for var_name in optimizer.state_dict():
+    print(var_name, "\t", optimizer.state_dict()[var_name])
+print()
+
+# 保存模型
+PATH = '/Users/suliang/MyCodeForPytorch/CIFAR10_LeNet5/saved_model'
+torch.save(net.state_dict(), PATH)
 
 '''
 预测1个batch看看效果

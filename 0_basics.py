@@ -6,6 +6,30 @@ Created on Sun Sep 23 21:52:36 2018
 @author: suliang
 
 pytorch的基础知识整理
+
+(1)定义模型
+    * 模型结构
+            > 初始化各个模型层Class-init
+            > 定义前向计算流Class-forward
+    * 初始化
+            > 初始化模型对象: model(可显示model.parameters(), state_dict)
+            > 初始化损失函数: criterion
+            > 初始化优化器: optimizer
+
+(2)训练：
+    * 外循环：epoch
+        * 内循环：batch
+            > 获得batch data
+            > 梯度清零: 
+            > 计算前向输出: output = model(input)  - 输出结果是什么形式？
+            > 计算预测: preds = t.max(output, 1) - 预测结果是什么含义？
+            > 计算单次损失: loss = criteria(output, label)  - 如何计算单次和累计损失
+            > 计算反向传播: output.backward(), loss.backward() - 到底用哪个做backward
+            > 优化器更新？: optimizer.step()  - 作用是什么？
+            > 计算累计损失: 
+        
+
+
  
 """
 
@@ -406,9 +430,12 @@ Q. 如何做一个完整训练？
 
 '''
 Q. 如何调用pytorch自带的数据集？
+    1. 所有数据存在 from torchvision import datasets
+    2. 加载：采用trainset = datasets.MNIST(...)
+    3. 直接把trainset当成可迭代对象使用： data, label = trainset[n]
+    4. 或者先基于trainset生成batch
 '''
-# pytorch在torchvision.datasets自带了MNIST，COCO（用于图像标注和目标检测），
-# CIFAR10 and CIFAR100，Imagenet-12，ImageFolder，LSUN Classification，STL10
+
 # 以上Datasets都是 torch.utils.data.Dataset的子类，
 # 所以，他们也可以通过torch.utils.data.DataLoader使用多线程（python的多进程）
 import torch
@@ -421,6 +448,8 @@ data_train = datasets.MNIST(root = '/Users/suliang/MyDatasets/MNIST/',
                             train = True,
                             download = False)
 # 对单个数据的调用
+# data_train是一个可迭代对象，等效于set(data, label)
+# 所以可以直接调用： data, label = data_train[i]
 image,label = data_train[10]
 
 # 如果希望分batch，则可借助DataLoader对数据进行分包和随机发送

@@ -6,6 +6,17 @@ Created on Sun Sep 23 21:52:36 2018
 @author: suliang
 
 pytorch的基础知识整理
+(0)数据预处理
+    * 数据变换
+            > transforms.RandomCrop()
+            > transforms.Normalize()
+            > transforms.ToTensor()
+            >
+    * 导入数据
+            > Image_datasets = datasets.ImageFolder()
+    * 数据分包
+            > Image_dataloaders = torch.utils.data.DataLoader()
+
 
 (1)定义模型
     * 模型结构
@@ -27,9 +38,13 @@ pytorch的基础知识整理
             > 计算反向传播: output.backward(), loss.backward() - 到底用哪个做backward
             > 优化器更新？: optimizer.step()  - 作用是什么？
             > 计算累计损失: 
-        
 
+Q: 为什么定义optimizer求解器时，需要传入model.parameters()?
+    - 因为为了求解器工作，需要传递给他模型所有参数，求解器才能自动更新这些参数
+    - 基本用法optimizer = optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
 
+Q: model.parameters()的数据到底长什么样子，有什么用？
+    - 
  
 """
 
@@ -398,14 +413,25 @@ loss = torch.nn.CrossEntropyLoss()
 
 
 '''
-Q. 如何选择合适的梯度求解器？
+Q. 如何选择合适的optimizer梯度求解器？
+- 模型的参数需要传递给求解器：model.parameters()
+- 理解model.parameters()：他是每层w和b的汇总，每层w或b分别为一个tensor, 所以5层一共10个tensor, len(list(model.parameters()))=10  
+- 用一个参数组和一个学习率传递给求解器：
+        > optim.SGD(model.parameters(),lr=0.01)
+- 用多个参数组代表不同层，并规划不同学习率
+        > optim.SGD([{'params':model.base.parameters()},
+                     {'params':model.classifier.parameters()}],
+                    lr=1e-2, monentum=0.9)
+        > scheduler = StepLR(optimizer=...)
 '''
-# 需要定义一个优化器
-
+# SGD
+optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
 # 带动量的小批量梯度下降SGD求解器
 optimizer = torch.optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
 # 自适应矩估计Adam求解器
-optimizer = torch.optim.Adam(models.parameters(), lr=learning_rate)
+optimizer = torch.optim.Adam(models.parameters(), lr=LR, betas=(0.9, 0.99))
+# RMSprop 指定参数alpha
+optimizer = torch.optim.RMSprop(net_RMSprop.parameters(), lr=LR, alpha=0.9)
 
 
 '''

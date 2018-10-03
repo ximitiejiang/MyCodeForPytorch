@@ -6,7 +6,7 @@ Created on Wed Sep 26 09:49:10 2018
 @author: suliang
 
 参考‘深度学习框架pytorch入门与实践’ chapter-2, 正确率53%
-该该代码来自于pytorch官方英文教程，实现LeNet5
+该代码来自于pytorch官方英文教程，实现LeNet5
 
 """
 
@@ -115,23 +115,29 @@ net = LeNet1()
 criteria = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(net.parameters(), lr = 0.001, momentum = 0.9)
 
-print(net)
-print()
+
+'''
+打印模型参数进行查看
+'''
+f = open("parmas.txt", "w") 
+print(net, file = f)
+print('-'*20,file=f)
 
 # 查看model.parameters()
 params = list(net.parameters())  # 获得该网络所有可学习参数列表 - 已初始化，未训练
-print(len(params)) # 打印参数长度 = 10，params[0]就代表conv1的参数
-print()
+print('length of params: '.format(len(params))) # 打印参数长度 = 10，params[0]就代表conv1的参数
+
 # 查看model.state_dict()
-print("Model's state_dict:")
+print("Model's state_dict:", file = f)
 for param_tensor in net.state_dict():
-    print(param_tensor, "\t", net.state_dict()[param_tensor].size())
-print()
+    print(param_tensor, "\t", net.state_dict()[param_tensor].size(), file=f)
+print('-'*20,file=f)
 # 查看optimizer.state_dict()
-print("Optimizer's state_dict:")
+print("Optimizer's state_dict:", file = f)
 for var_name in optimizer.state_dict():
-    print(var_name, "\t", optimizer.state_dict()[var_name])
-print()
+    print(var_name, "\t", optimizer.state_dict()[var_name], file=f)
+print('-'*20,file=f)
+f.close()
 
 
 '''
@@ -159,18 +165,24 @@ for epoch in range(2):
 print('finished training!')
 print('last time: {}'.format(time.time()-since))
 print()
-# 查看model.state_dict()
-print("Model's state_dict:")
-for param_tensor in net.state_dict():
-    print(param_tensor, "\t", net.state_dict()[param_tensor].size())
-print()
-# 查看optimizer.state_dict()
-print("Optimizer's state_dict:")
-for var_name in optimizer.state_dict():
-    print(var_name, "\t", optimizer.state_dict()[var_name])
-print()
 
-# 保存模型
+# 查看model.state_dict()
+f = open("parmas.txt", "a+") # 只有模式a和a+能够让指针在文件末尾
+
+print("After training, Model's state_dict:", file = f)
+for param_tensor in net.state_dict():
+    print(param_tensor, "\t", net.state_dict()[param_tensor].size(), file=f)
+print('-'*20,file=f)
+# 查看optimizer.state_dict()
+print("After training, Optimizer's state_dict:", file = f)
+for var_name in optimizer.state_dict():
+    print(var_name, "\t", optimizer.state_dict()[var_name], file=f)
+print('-'*20,file=f)
+f.close()
+
+'''
+保存模型
+'''
 PATH = '/Users/suliang/MyCodeForPytorch/CIFAR10_LeNet5/saved_model'
 torch.save(net.state_dict(), PATH)
 

@@ -243,81 +243,114 @@ b.backward([1,1,1])
 
 '''
 Q. 如何自动求导的细节分析
-* 首先要对tensor封装成variable, 把variable理解成一个函数
-    - tensor由2部分组成：data, grad；variable由3部分组成：data, grad, grad_fn
-    - 一般只需要把叶子结点设置为Variable，从计算过程就会自动把中间节点和根结点都变成variable
-    - 一般只需要把待求解的叶子节点设置为自动求导，从计算过程就会把必要的中间节点和根结点都定为自动求导
+* 每个tensor都有一个flag为requires_grad，用于设定该tensor是否需要自动求导，默认为False
+    - tensor默认requires_grad=False; 预训练模型默认requires_grad=True
+    - 可用该flag来冻结相关参数的梯度计算
+* 自动求导机理：基于程序前向计算过程，创建一个计算图，以叶子节点为输入，根结点为输出，
+    - 通过从从根结点反向跟踪到叶子节点。
+    - 自动求导代表了这张计算图，堪称一个function函数，可通过apply()来计算结果
+    - 在前向计算过程中，就会同步评估梯度来构建反向计算图
+    - 每个tensor的.grad_fn属性用于进入该梯度计算
+    - 每一个循环都会重新创建计算图, 但由于叶子节点梯度会一直保留，其他节点都会计算完自动清0
+      所以需要手动清零：
 
-* variable()函数：
-    - 核心参数1: requires_grad(默认为False), 为True则会自动求导
-    - 只要设置了某一叶节点的requires_grad，自动会把跟他串联的节点都设置
-      比如a要求导，则串联出a-c-d自动设置求导，而b不需要自动求导
-    - 核心参数2: volatile(默认为False), 在新版pytorch中已经取消这个变量
-
-* backward()函数：
-    - 单次数据输入对应单次前向计算和单次backward，然后系统自动释放buffer，不能再次执行backward
-    - 核心参数1: grad_variables = None
-    - 如果要单次输入多次执行backward，需设置backward(grad_variables=True)
-    - 核心参数2: retain_graph = None
+* 函数backward(gradient=None, retain_graph=None, create_graph=False)：
+    - 核心参数1: gradient = None，即默认只计算标量的梯度，如果是矢量，需要指定(gradient=Tensor)
+    - 该函数只计算保留叶子结点的梯度，其他节点梯度计算完就释放不保留
+    - 该函数保留了叶子结点梯度，为了下次循环的重新计算，需要手动清零叶结点梯度
+* 非叶子结点计算完后梯度会被清空，获得非叶节点梯度的方法是autograd.grad或hook技术
 '''
-# forward函数内容(a,b)->c->d
-a = Variable(torch.ones(3,4),requires_grad = True)
-b = Variable(torch.zeros(3,4))
-c = a.add(b)
-d = c.sum()
-# 检查串联的线上各个变量的自动求导设置和是否为叶子结点
-# a为叶结点+自动求导
-# b为叶结点+不自动求导
-# c为中间节点+自动求导
-# d为根结点+自动求导
-# 但最终，只有a的求导会保留，其他要么不求导(比如b)，要么非叶节点不保留(比如c,d)
-print(a.requires_grad, b.requires_grad, c.requires_grad, d.requires_grad)
-print(a.is_leaf, b.is_leaf, c.is_leaf, d.is_leaf)
+# 案例：如何设置部分参数不做自动求导，部分参数做自动求导
+model = torchvision.models.resnet18(pretrained=True) # 迁移学习一个模型
+for param in model.parameters():
+    param.requires_grad = False   #冻结模型所有梯度计算
+model.fc = nn.Linear(512, 100)    # 替代模型的全联接层，默认需要自动求导
+optimizer = optim.SGD(model.fc.parameters(), lr=1e-2, momentum=0.9)  #优化器也只优化全联接层
 
-# 根节点调用backward
-print(a.grad, b.grad, c.grad, d.grad)  # backward之前，所有grad都为None
-d.backward()
-print(a.grad, b.grad, c.grad, d.grad)  # backward之后，只有叶子节点grad保留，非叶节点grad虽然也计算了，但计算完就释放掉了
+# 案例：查看反向求导路径上哪些变量会求导，受哪些因素影响是否求导？
+import torch
+x = torch.randn(3, 3)  # x为叶节点，默认不进行梯度计算
+y = torch.randn(3, 3)  # y为叶结点，梯度保留
+z = torch.randn((3, 3), requires_grad=True)   # c为中间节点，梯度不保留
+
+a = x + y
+b = a + z.sum()    # d为根结点，梯度不保留
+
+print(x.requires_grad, y.requires_grad, z.requires_grad, a.requires_grad, b.requires_grad)  # 初始状态，默认都要求导
+print(x.is_leaf, y.is_leaf, z.is_leaf, a.is_leaf, b.is_leaf)
+print(x.grad, y.grad, z.grad, a.grad, b.grad)  # backward之前，所有grad都为None
+b.backward()
+print(a.grad, b.grad, c.grad, d.grad)  # 为什么没有梯度计算结果：回过头去看陈云的书
+
+# 案例：自动求导
+x = torch.ones(1, requires_grad=True)
+w = torch.rand(1, requires_grad=True)
+y = x * w
+# y依赖于w，而w.requires_grad = True
+x.requires_grad, w.requires_grad, y.requires_grad
 
 
 '''
 Q. 如何获得自动求导过程中不保留的中间节点的梯度值？
 '''
 # 方法1: 采用autograd.grad函数
-x = Variable(torch.ones(3), requires_grad = True)
-w = Variable(torch.rand(3), requires_grad = True)
-y = x + w
+x = torch.ones(3, requires_grad=True)
+w = torch.rand(3, requires_grad=True)
+y = x * w
 z = y.sum()
+print(torch.autograd.grad(z, y))       # z对y的梯度，隐式调用backward()
 
-print(x.grad, w.grad, y.grad, z.grad)  # 反向传播前，梯度都为none
-z.backward()
-print(x.grad, w.grad, y.grad, z.grad)  # 反向传播后，两个叶子结点梯度保留，其他梯度释放
-z_grad = torch.autograd.grad(z,y)      # 单独求解某个中间节点变量的梯度
-print(z_grad)
+# 方法2: 采用hook钩子获得梯度，此处暂时留着（参考实例）
+grad_list = []
+def hook(grad):   # 用于传入注册hook函数的形参函数，该形参函数的输入必须是grad
+    grad_list.append(grad)
+    print(grad_list)
 
-# 方法2: 采用hook钩子获得梯度，此处暂时留着
+x = torch.ones(3, requires_grad=True)
+w = torch.rand(3, requires_grad=True)
+y = x * w
+h = y.register_hook(hook)  #对预求解梯度的变量注册hook:注意register_hook只接受一个函数为形参
+z = y.sum()
+z.backward()  # 在执行backward函数时，就会调用对y的hook
+h.remove()    # 如果不需要了，需要移除hook
 
 
 '''
-Q. 如何测试Variable类的基本属性?（综合理解variable, grad, backward）
+Q. 如何理解自动求导的单次执行，二次就会报错的原理？
+- 前向计算建立时(即定义x,y的求解公式)，就会同步建立计算图用于反向求导计算
+- 一次前向计算过程，对应一次backward计算，backward计算完成后，计算图就释放清空
+- 如果特殊情况，需要一次前向计算，多次反向求导，则设置retain_graph=true保留计算图
 '''
-# 如果要使用自动求导，就必须把tensor封装成Variable
-# x, y封装成Variable之后的对象，有如下属性可以用
-# x.data  为封装的tensor值
-# x.grad  初始化时grad=0, 运行了y.backward()方法后，该grad值就会更新
-# 调用backward()逻辑：如果调用y.backward()方法，就会对y的计算图中requires_grad=True的所有变量x求导dy/dx
-# 把y的计算图理解为一棵树，y为父节点，下面有很多叶子节点，叶子结点的梯度会在反向传播中更新。
 
+x = torch.ones(1)
+b = torch.rand(1, requires_grad = True)
+w = torch.rand(1, requires_grad = True)
+y = w * x # 等价于y=w.mul(x)
+z = y + b # 等价于z=y.add(b)
+
+z.backward(retain_graph=True)  #backward参数为保留计算图，所以下次backward不会报错
+w.grad
+
+z.backward()  # backward参数为空，所以计算图会释放，不再能进行反向求导
+w.grad
+
+z.backward()  # 计算图已经释放，计算报错。
+w.grad
+
+
+'''
+Q: 如何利用backward()的求导，来计算一些求导运算？
+'''
+# 计算y = x^2 * exp(x)的导数
 import torch
-from torch.autograd import Variable
-w1 = Variable(torch.Tensor([1.0,2.0,3.0]),requires_grad=True)
-print('before grad:',w1.grad)
-print(w1.data)
+x = torch.randn(3,4, requires_grad=True)
+y = x**2 * x.exp()
+y.backward(torch.ones(y.size()))
+print(x.grad)
 
-y = torch.mean(w1)  # 变换函数
-y.backward()  # 基于y的计算过程，反向计算路径上每个层上过程变量的梯度，相应更新每个过程变量的x.grad
-print('after grad:',w1.grad)
-print(w1.data)
+# 直接计算值: 与跟backward自动求解的梯度值相同
+dydx = 2*x*x.exp() + x**2*x.exp()
+print(dydx)
 
 
 '''
@@ -336,34 +369,66 @@ print(d)
 
 
 '''
-Q. 如何定义每种特殊的层？
-    * 线性层：
-    * 卷积层
-    * 池化层
-    * 
+Q. 如何定义每种特殊的层（如何理解torch.nn模块）？
 '''
-# 有各种不一样的层：都放置在torch.nn
-import torch
-torch.nn.Linear()
+# 有各种不一样的层：都放置在torch.nn中
+# nn.module是一个基类，用于定义构建所有自己的类
+# nn.Sequntial()是一个容器，用于定义
+import torch.nn as nn
 
 # 全联接层
+# 默认前两个数字直接写：输入特征数，输出特征数；基本没其他参数
 dens = torch.nn.Linear(14*14*128,1024)
-
 
 # 二维卷积层
 # 参数(in_channels,out_channels,kernel_size,strid=1,padding=0,dilation=1,groups=1,bias=True)
-# 输入：B,C,H,W
-# 变量：conv.weight
+# 默认前三个数字直接写：输入层数，输出层数，核大小；其他参数需要名称说明
 conv = torch.nn.Conv2d(64,128,kernel_size=3,stride=1,padding=1)
 
 # 最大池化层
 # 参数(kernel_size,stride=None,padding=0,dilation=1,return_indices=False,ceil_mode=False)
-# 输入：B,C,H,W
+# 默认前一个数字直接写：核大小；其他参数需要名称说明
 m = torch.nn.MaxPool2d(stride=2, kernel_size=2)
 
 # 激活层
 m = torch.nn.ReLU()
 
+
+# nn.Sequential()  创建组合模型
+# model.modules()  输出模型里边所有子模型，包括sequential()模型和层模型
+# model.parameters()  输出模型里边所有参数，含数值和尺寸
+# model.state_dict()  输出模型状态：也即模型里边所有参数/偏置的字典
+# model.eval() 设置模型在测试模式
+# model.train() 设置模型在训练模式
+# model.zero_grad() 设置模型所有参数梯度归零
+
+import torch.nn as nn
+# 单层模型
+l1 = nn.Linear(2, 2)  # 创建2输入，2输出全联接层
+l1.modules()     # 显示只有一个模型
+
+l1.state_dict()
+for key, value in l1.state_dict().items(): # 单层模型，迭代取出字典的键和值
+    print(key, value)
+    
+for para in l1.parameters():   # 单层模型取出可迭代模型参数tensor
+    print(para.data)           # 打印参数
+l1.weight           # 只有一个模型，所以直接可以调用weight和bias参数
+l1.bias             # 如果是多个模型的容器，则会封装成dict放在state_dict()中
+
+# 多层模型
+model = nn.Sequential(nn.Linear(2,2), nn.Linear(2,2))
+print(model)     # model可以直接打印
+print(model[0])  # model也可以切片打印
+for i, m in enumerate(model.modules()):  # model.modules取出来后可以单独打印某层 
+    print(i,'->',m)
+
+for para in model.parameters():   # 取出模型的所有参数：可迭代，tensor
+    print(para.data, para.size())  # 显示参数值和参数尺寸
+
+model.state_dict().keys()         # 取出模型状态参数：可迭代，字典
+for key, value in model.state_dict().items(): # 迭代取出字典的键和值
+    print(key, value)
 
 
 '''
@@ -371,16 +436,20 @@ Q. 如何组合多个层形成一个网络？
 '''
 # 方法1: 用sequential类来组合各个层的类
 import torch
-models = torch.nn.Sequential(torch.nn.Linear(input_data, hidden_layer),
+models = torch.nn.Sequential(torch.nn.Linear(32, 32),
                              torch.nn.ReLU(),
-                             torch.nn.Linear(hidden_layer, output_data))
-# 方法2: 用orderdict类来传入层参数
+                             torch.nn.Linear(32, 64))
+print(models)
+print(models[0])   # 通过默认编号切片取出该层
+# 方法2: 用orderdict类来传入层参数：多了对每一个层模型的自定义名字
+# 这种方法优点在于：可以直接引用名称，来调用该层
 import torch
 from collections import OrderedDict
-models = torch.nn.Sequential(OrderedDict([('Line1', torch.nn.Linear(input_data, hidden_layer)),
+models = torch.nn.Sequential(OrderedDict([('l1', torch.nn.Linear(32, 32)),
                                         ('ReLU', torch.nn.ReLU()),
-                                        ('Line2', torch.nn.Linear(hidden_layer, output_data))]))
-
+                                        ('l2', torch.nn.Linear(32,64))]))
+print(models)
+print(models.l1)  # 通过名称取出该层
 
 '''
 Q. 如何继承一个已有pytorch的模型并应用？
@@ -424,7 +493,7 @@ Q. 如何选择合适的optimizer梯度求解器？
                     lr=1e-2, monentum=0.9)
         > scheduler = StepLR(optimizer=...)
 '''
-# SGD
+# SGD: torch.optim.SGD(params, ir=, momentum=0,weight_decay=0)
 optimizer = torch.optim.SGD(model.parameters(), lr = 0.01)
 # 带动量的小批量梯度下降SGD求解器
 optimizer = torch.optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
@@ -435,23 +504,19 @@ optimizer = torch.optim.RMSprop(net_RMSprop.parameters(), lr=LR, alpha=0.9)
 
 
 '''
-Q. 如何做一个完整训练？
+Q. 如何生成指数缩小型学习率？
 '''
-# 初始化数据和节点数
-#   * 要用Variable封装数据
-#   * 
-# 定义model
-#   * 使用Sequential()类可以很方便定义各个层
-# 定义训练准备
-#   * epoch: 循环次数，每次循环都会生成一个模型并得到一个损失数据
-#   * learning rate: 使用默认值
-#   * loss: 可以借用系统中自带的几种损失函数，loss = torch.nn.MSELoss(y_pred, y)
-#   * optimzer: 可以借用系统中自带的几种梯度求解器，optimzer = torch.optim.Adam()
-# 开始训练
-#   * 前向计算：
-#   * 损失计算
-#   * 梯度求解
-#   * 反向计算
+import torch.optim.lr_scheduler.StepLR
+
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)  # 设置优化器和初始学习率
+# 学习率规划器：lr = 0.01, if epoch < 30
+#            lr = 0.001, if 30 <= epoch < 60
+#            lr = 0.0001, if 60 <= epoch < 90
+scheduler = StepLR(optimizer, step_size=30, gamma=0.1) 
+for epoch in range(100):
+    scheduler.step()
+    train()
+    validate()
 
 
 '''

@@ -443,6 +443,8 @@ print(models)
 print(models[0])   # 通过默认编号切片取出该层
 # 方法2: 用orderdict类来传入层参数：多了对每一个层模型的自定义名字
 # 这种方法优点在于：可以直接引用名称，来调用该层
+# 说明：pytorch默认对层的组合采用的是list方式，所以能用切片访问方法model[0]
+# 说明：而如果用orderedDict方式，则可用字典访问方式，所以能用model.l1
 import torch
 from collections import OrderedDict
 models = torch.nn.Sequential(OrderedDict([('l1', torch.nn.Linear(32, 32)),
@@ -735,12 +737,37 @@ Q. 如何使用pytorch自带的高级模型？
 '''
 import torchvision.models as models
 
-resnet18 = models.resnet18(pretrained=True)   # 下载完成
-alexnet = models.alexnet(pretrained=True)    # 下载完成
-squeezenet = models.squeezenet1_0(pretrained=True)
-vgg16 = models.vgg16(pretrained=True)
-densenet = models.densenet161(pretrained=True)
-inception = models.inception_v3(pretrained=True)
+alexnet = models.alexnet(pretrained=True)           # 下载完成, 244M
+# 深度加深到8层
+# 真正把深度神经网络带入大众的王者归来，让深度学习完全超越传统机器学习
+# 第一次采用dropout来预防过拟合
+# 第一次采用GPU
+
+vgg16 = models.vgg16(pretrained=True)               # 下载完成, 553M (网络加深到)
+# 深度加深到16层的VGG16和19层的VGG19
+# 统一了卷积层参数：卷积核3x3，step=1, Padding=1
+# 第一次采用更小卷积核(从5x5减小到3x3)
+
+inception = models.inception_v3(pretrained=True)    # 下载完成, 109M (网络加深到20层，参数大小却极大减小)
+# 也叫GoogleNet，深度加深到22层(V3) 
+# 第一次取消全联接层，所以节省了运算减少参数(googleNet参数只有AlexNet的一半)
+# 第一次采用Inception单元结构: 把数据并行送入4种卷积池化核（1x1卷积, 3x3卷积, 5x5卷积, 3x3池化）后再合并
+# 优化的Inception v3则在卷积池化核之前先增加1x1卷积来做特征通道的聚合，能够有效减少所需参数的数量
+# 其中1x1卷积核借用了NIN模型(network in network)用于保持空间维度，降低深度
+
+resnet18 = models.resnet18(pretrained=True)         # 下载完成, 47M (网络进一步加深到上百层，参数大小却极小)
+# 深度进一步加深, 可以有18层的resnet18, 甚至50层/101层/152层
+# 引入残差模块(恒等映射)，进一步解决高层数的梯度消失问题(比普通ReLU更有效)，真正让网络达到上百甚至上千层
+# 残差模块就是添加短路连接shortcut，可以让网络更加深
+#
+
+densenet = models.densenet161(pretrained=True)      # 下载完成, 115M
+
+squeezenet = models.squeezenet1_0(pretrained=True)  # 下载完成, 5M
+
+
+
+print(resnet18)
 
 
 '''

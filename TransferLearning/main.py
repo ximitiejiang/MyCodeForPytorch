@@ -32,7 +32,9 @@ data_dir = "/Users/suliang/MyDatasets/Imagenet_2class/hymenoptera_data"
 
 # 从如下几个模型中选择
 # [resnet, alexnet, vgg11, squeezenet, densenet, inception]
-model_name = "alexnet"
+# - alexnet: 迁移学习耗时3m43s, scratch学习耗时11m15s
+# - resnet: 迁移学习耗时11m54s, scratch学习耗时27m4s
+model_name = "resnet"
 
 # 数据集分类数
 num_classes = 2
@@ -285,6 +287,9 @@ model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft
 
 '''
 结果可视化
+把一个基于现有数据进行全新训练的模型跟基于预训练参数的模型进行对比，看谁的精度比较高。
+理论上：模型是一样的，但因为预训练模型参数是基于大数据集做的，而全新训练模型参数是基于2分类的Imagenet做的，
+训练数据少的预测精度肯定就差很多。
 '''
 scratch_model,_ = initialize_model(model_name, num_classes, feature_extract=False, use_pretrained=False)
 scratch_model = scratch_model.to(device)
@@ -310,4 +315,5 @@ plt.ylim((0,1.))
 plt.xticks(np.arange(1, num_epochs+1, 1.0))
 plt.legend()
 plt.show()
+
             

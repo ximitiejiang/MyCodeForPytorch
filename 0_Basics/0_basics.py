@@ -640,6 +640,30 @@ plt.imshow(data)
 
 
 '''
+Q. 如何在显示图片时实现图片维度的改变：增减维度，维度顺序调整？
+'''
+import matplotlib.pyplot as plt
+import numpy as np
+import torch
+import torchvision.transforms as transforms
+from PIL import Image   # pytorch推荐的打开图片方法, 也是事实上的python标准图像处理库
+root = '/Users/suliang/MyDatasets/DogsVSCats/train/dog.8011.jpg'
+img = Image.open(root)
+transform = transforms.ToTensor()
+data = transform(img)
+
+
+# 增加维度
+data = data.unsqueeze(0)
+
+# 调整维度顺序
+
+# 减小维度(还原维度)
+
+# 还原维度顺序
+
+
+'''
 Q. 如何处理文件夹的相对路径和绝对路径？
 - os.listdir: 获得目录下所有文件的文件名
 - os.path.dirname: 返回目录的目录名
@@ -675,7 +699,7 @@ plt.imshow(data)
 
 from torchvision import transforms as T
 
-# transform1: 缩放和改尺寸, resize(等效于scale)
+# transform1: 缩放和改尺寸, resize(等效于scale, scale已经废弃用resize替代了)
 transform1 = T.Compose([T.Resize([64,64])])  # 改为指定尺寸HxW，如果1个数则只改短边但保持长宽比不变
 new_data = transform1(data)
 plt.imshow(new_data)
@@ -747,6 +771,9 @@ vgg16 = models.vgg16(pretrained=True)               # 下载完成, 553M (网络
 # 深度加深到16层的VGG16和19层的VGG19
 # 统一了卷积层参数：卷积核3x3，step=1, Padding=1
 # 第一次采用更小卷积核(从5x5减小到3x3)
+
+vgg19 = models.vgg19(pretrained=True)
+
 
 inception = models.inception_v3(pretrained=True)    # 下载完成, 109M (网络加深到20层，参数大小却极大减小)
 # 也叫GoogleNet，深度加深到22层(V3) 

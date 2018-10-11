@@ -753,6 +753,7 @@ resnet18 = models.resnet18(pretrained=True)         # 下载完成, 47M (网络�
 # 引入残差模块(恒等映射)，进一步解决高层数的梯度消失问题(比普通ReLU更有效)，真正让网络达到上百甚至上千层
 # 残差模块就是添加短路连接shortcut，可以让网络更加深
 #
+resnet34 = models.resnet34(pretrain=True)             # 待下载
 
 resnet50 = models.resnet50(pretrained=True)           # 待下载
 
@@ -768,8 +769,11 @@ print(resnet18)
 # 导入torchsummary查看模型的输出形状，模型参数个数，模型参数大小
 # 安装torchsummary: pip3 install torchsummary
 from torchsummary import summary
-summary(vgg16, input_size=(3, 244, 244))
+summary(vgg16, input_size=(3,244,244))
 
+summary(resnet18, input_size=(3,244,244))  # ? 对输入维度有什么要求
+
+summary(alexnet, input_size=(3,64,64))     # ? 对输入维度有什么要求
 
 
 '''

@@ -45,7 +45,7 @@ class VGG(nn.Module):
                 nn.init.normal_(m.weight, 0, 0.01)
                 nn.init.constant_(m.bias, 0)
 
-
+# 该函数用于生成feature layer的所有层
 def make_layers(cfg, batch_norm=False):
     layers = []
     in_channels = 3

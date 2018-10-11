@@ -6,49 +6,9 @@ Created on Sun Sep 23 21:52:36 2018
 @author: suliang
 
 pytorch的基础知识整理
-(0)数据预处理
-    * 数据变换
-            > transforms.RandomCrop()
-            > transforms.Normalize()
-            > transforms.ToTensor()
-            >
-    * 导入数据
-            > Image_datasets = datasets.ImageFolder()
-    * 数据分包
-            > Image_dataloaders = torch.utils.data.DataLoader()
 
-
-(1)定义模型
-    * 模型结构
-            > 初始化各个模型层Class-init
-            > 定义前向计算流Class-forward
-    * 初始化
-            > 初始化模型对象: model(可显示model.parameters(), state_dict)
-            > 初始化损失函数: criterion
-            > 初始化优化器: optimizer
-
-(2)训练：
-    * 外循环：epoch
-        * 内循环：batch
-            > 获得batch data
-            > 梯度清零: 
-            > 计算前向输出: output = model(input)  - 输出结果是什么形式？
-            > 计算预测: preds = t.max(output, 1) - 预测结果是什么含义？
-            > 计算单次损失: loss = criteria(output, label)  - 如何计算单次和累计损失
-            > 计算反向传播: output.backward(), loss.backward() - 到底用哪个做backward
-            > 优化器更新？: optimizer.step()  - 作用是什么？
-            > 计算累计损失: 
-
-Q: 为什么定义optimizer求解器时，需要传入model.parameters()?
-    - 因为为了求解器工作，需要传递给他模型所有参数，求解器才能自动更新这些参数
-    - 基本用法optimizer = optim.SGD(model.parameters(), lr = 0.01, momentum=0.9)
-
-Q: model.parameters()的数据到底长什么样子，有什么用？
-    - 
- 
 """
 
-#--------------Open issue---------------------
 '''
 Q. 如何定义基本的tensor?
 - tensor是什么？tensor跟array基本没有区别，所以pytorch基本可以替代numpy了，你不再需要import numpy as np
@@ -652,13 +612,19 @@ img = Image.open(root)
 transform = transforms.ToTensor()
 data = transform(img)
 
+# 用img.size 查看图片本身的尺寸(像素H,W)
+# 用data.size() 查看图片tensor的尺寸(像素C,H,W)
+
+# 增加维度: squeeze是指挤的意思，unsqueeze代表放松，也就是加维度
+data = data.unsqueeze(0)
 
 # 增加维度
-data = data.unsqueeze(0)
+data = data.view(1,3,56,56)
 
 # 调整维度顺序
 
 # 减小维度(还原维度)
+data = data.squeeze(0)
 
 # 还原维度顺序
 
@@ -788,13 +754,22 @@ resnet18 = models.resnet18(pretrained=True)         # 下载完成, 47M (网络�
 # 残差模块就是添加短路连接shortcut，可以让网络更加深
 #
 
+resnet50 = models.resnet50(pretrained=True)           # 待下载
+
+restnet101 = models.resnet101(pretrained=True)        # 待下载
+
 densenet = models.densenet161(pretrained=True)      # 下载完成, 115M
 
 squeezenet = models.squeezenet1_0(pretrained=True)  # 下载完成, 5M
 
 
-
 print(resnet18)
+
+# 导入torchsummary查看模型的输出形状，模型参数个数，模型参数大小
+# 安装torchsummary: pip3 install torchsummary
+from torchsummary import summary
+summary(vgg16, input_size=(3, 244, 244))
+
 
 
 '''

@@ -34,7 +34,8 @@ data_dir = "/Users/suliang/MyDatasets/Imagenet_2class/hymenoptera_data"
 # [resnet, alexnet, vgg11, squeezenet, densenet, inception]
 # - alexnet: 迁移学习耗时3m43s, scratch学习耗时11m15s
 # - resnet: 迁移学习耗时11m54s, scratch学习耗时27m4s
-model_name = "resnet"
+# - squeezenet: 迁移学习耗时9m2s， scratch学习耗时14m0s
+model_name = "densenet"
 
 # 数据集分类数
 num_classes = 2

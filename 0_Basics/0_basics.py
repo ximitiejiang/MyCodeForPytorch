@@ -724,6 +724,12 @@ plt.imshow(TtoP)
 '''
 Q. 如何使用pytorch自带的高级模型？
 - Pytorch自带了AlexNet, VGG, ResNet, Inception
+- 使用时的要求参考原文：https://github.com/pytorch/vision/blob/master/docs/source/models.rst
+  使用pytorch自带的模型有一些注意事项：
+      >部分模型需要区分训练模式和验证模式
+      >所有预训练模型都期望输入的图形都基于相同标准：数值在[0,1]之间，顺序CxHxW
+      >所有图形先做标准化，normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                                         std=[0.229, 0.224, 0.225])
 '''
 import torchvision.models as models
 

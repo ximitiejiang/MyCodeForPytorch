@@ -5,7 +5,13 @@ Created on Sun Sep 23 21:52:36 2018
 
 @author: suliang
 
-pytorch的基础知识整理
+当前主机配置：
+    - CPU: intel i7 7800, 6核12线程，主频3.5GHz
+    - GPU: NVIDIA GTX1080ti, 显存11G, 2块
+    - 内存: 镁光16G DDR4 2400
+    - 主板: intel X229芯片组, LGA 2066 ATX, 支持双路PCI-E 16X
+    - 硬盘: 256G固态硬盘
+    - 电源: 额定1000W 80plus
 
 """
 
@@ -770,7 +776,7 @@ densenet = models.densenet161(pretrained=True)      # 下载完成, 115M
 squeezenet = models.squeezenet1_0(pretrained=True)  # 下载完成, 5M
 
 
-print(resnet18)
+print(alexnet)
 
 # 导入torchsummary查看模型的输出形状，模型参数个数，模型参数大小
 # 安装torchsummary: pip3 install torchsummary
@@ -797,6 +803,18 @@ vis.line(X=x, Y=y, win='sinx', opts={'title':'y=sin(x)'})
 #在vis里边绘制
 
 
+
+'''
+Q: 一些基本的linux, GPU命令
+
+- flops = the number of floating-point multiplication-adds per second，
+  即浮点数先乘后加的能力，
+'''
+nvidia-smi   # 查看显存占用(显存大，所能运行的网络也大)，
+             # 查看GPU占用情况(GPU大，计算越快)
+
+
+pip3 install gpustat  # 安装gpustat，他基于nvidia-smi，
 
 
 

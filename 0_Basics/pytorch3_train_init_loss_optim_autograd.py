@@ -36,6 +36,7 @@ for param in model.parameters(): # 取出每一个参数tensor
     param.requires_grad = False  # 原始模型的梯度锁定
 in_fc = model.fc.in_features
 model.fc = nn.Linear(in_fc, 10) # 替换最后一层fc，改为输出为10分类
+parameters_to_update = model.fc.parameters()
 
 # 2. 准备数据 (基于CIFAR10进行10分类)
 train_transforms = transforms.Compose([transforms.RandomResizedCrop(input_size),
@@ -84,13 +85,14 @@ model = model.to(device)
 #if torch.cuda.device_count() > 1:
 #    model = nn.DataParallel(model)
 #    model.to(device)
-optimizer = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
+optimizer = optim.SGD(parameters_to_update, lr=0.001, momentum=0.9)
 criteria = nn.CrossEntropyLoss()
 
 # 4. 开始训练
 best_model_weights = copy.deepcopy(model.state_dict()) # 把原模型的参数和缓存保存
 best_acc = 0.0
-time = time.time()
+since = time.time()
+
 for epoch in num_epoch:        
         for data, label in trainloader:
             

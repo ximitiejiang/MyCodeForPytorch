@@ -62,8 +62,16 @@ model = nn.Sequential(
           nn.Conv2d(20,64,5),
           nn.ReLU())
 model.modules()          # 输出模型里边所有子模型，包括sequential()模型和层模型
-model.parameters()       # 输出模型里边所有参数，含数值和尺寸
-model.state_dict()       # 输出模型状态：也即模型里边所有参数/偏置的字典
+model.to(device)         # 把模型送到运行设备
+    model = model.to(device)
+model.parameters()       # 返回所有参数tensor
+    for param in model.parameters():
+        param.requires_grad = False
+model.named_parameters() # 返回所有参数tensor的[名称, tensor]
+    for name, tensor in model.named_parameters():
+        print(name)
+model.state_dict()       # 输出模型状态字典：包括参数和缓存的{名字和数值}，{key:value}
+    
 model.train()            # 设置模型在训练模式
 model.eval()             # 设置模型在测试模式
 model.zero_grad()        # 设置模型所有参数梯度归零    

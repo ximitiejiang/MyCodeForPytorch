@@ -52,10 +52,8 @@ a.item   #
 a.size()
 a.shape
 a.shape[1]
-# 设备属性
-device = torch.device('cuda',0)   # 返回一个设备对象，但不是指定运行的设备
-device = torch.device('cuda:1')   # 另一种写法
-print(device)
+data = data.to(device)
+label = label.to(device)
 
 
 '''--------------------------------------------------------
@@ -196,11 +194,11 @@ Q. 对cuda有那些属性可用?
 -----------------------------------------------------------
 '''
 # 定义一个设备
-device = torch.device('cuda:1')
+device = torch.device('cuda:1') #device有两个属性:device.index, device.type
 print(device)
 # 设置当前设备
-torch.cuda.set_device(1)
-torch.cuda.current_device()
+torch.cuda.set_device(1)     # 输入GPU的index 
+torch.cuda.current_device()  # 输出GPU的index
 # 设备数，设备能力，设备可用
 torch.cuda.device_count()
 torch.cuda.get_device_capability(0)

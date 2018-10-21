@@ -11,10 +11,15 @@ Created on Sat Oct 20 16:13:21 2018
 Q. 如何定义对图片预处理的transform？
 -----------------------------------------------------------
 '''
+import os
+path = '~/MyDatasets/DogsVSCats/train/dog.7014.jpg'  # 待获得完整路径的目录名要以～开头
+fullpath = os.path.expanduser(path)   # 获得完整路径名
+print(fullpath)
+
 # 先显示原始图片
 from PIL import Image
 import matplotlib.pyplot as plt
-root = '/Users/suliang/MyDatasets/DogsVSCats/train/dog.7014.jpg'
+root = '/Home/MyDatasets/DogsVSCats/train/dog.7014.jpg'
 data = Image.open(root)
 plt.imshow(data)
 

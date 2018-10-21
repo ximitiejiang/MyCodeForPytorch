@@ -15,158 +15,12 @@ Created on Sun Sep 23 21:52:36 2018
 
 """
 
-'''
-Q. 如何定义基本的tensor?
-- tensor是什么？tensor跟array基本没有区别，所以pytorch基本可以替代numpy了，你不再需要import numpy as np
-- tensor有2部分组成：一部分是tensor.data, 另一部分是tensor.grad. 默认输出是t.data即t = t.data
-- 有7种基本的CPU tensor：torch.FloatTensor/torch.DoubleTensor/torch.ByteTensor/torch.CharTensor/torch.ShortTensor/torch.IntTensor/torch.LongTensor
-- 最常用的2种：torch.FloatTensor, torch.IntTensor
-- 默认的torch.Tensor()是是FloatTensor
-'''
-a = torch.FloatTensor([[1, 2, 3], [4, 5, 6]]) # 浮点数tensor
-
-b = torch.IntTensor(2, 4).zero_()  # 整数tensor
-
-c = torch.Tensor([[1,2,3],[4,5,6]])  # 浮点数tensor简化新建
-
-d = torch.ones(2,3)  # 全1tensor
-d = torch.zeros(2,3) # 全0tensor
-d = torch.eye(3,3)   # 主对角线全1tensor
-d = torch.arange(0,10,2)      # 从0-10取值, 间隔2
-d = torch.linspace(0,10,5)  # 从0-10取值, 取5份
-d = torch.rand(2,3)   # 随机-0-1之间的均匀分布
-d = torch.randn(2,3)  # 随机-标准0-1正态分布(均值0，方差1)
-d = torch.randperm(6) # 随机0-n的整数排列 
-
-# 如果是单元素tensor，可通过item直接转成python数据
-d = torch.Tensor([1])
-d1 = d.item()
-
-
-'''
-Q. 如何对tensor进行切片?
-'''
-import torch
-x = torch.FloatTensor([[1, 0, 3], [4, 5, 6]]) 
-print(x[1][2])  #类似于对list的原始多维切片
-
-x[0][1] = 8   # 可以直接切片赋值
-print(x)
-
-print(x[:,1])  # 跟numpy一样的高级切片方式
-print(x[:,1].size())
-
-z = x > 1   # 条件筛选切片: 返回符合条件=1的0-1矩阵
-z = x[x>3]  # 条件筛选切片: 返回符合条件的值
-z = x[x!=0]
 
 
 
-'''
-Q. 如何对tensor内的元素进行计算？
-- 基本上所有tensor都支持两类接口: t1.func(), t.func(a)，其中t1.func()这种后置式的更方便常用
-- 函数名以下划线结尾的都是inplace方式，即会修改原始tensor，比如a.zero_(), b.abs_()
-
-'''
-# 计算清零
-a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-a.zero_()  # 用0填充tensor, 只有一种带后缀的方式，修改原tensor
-print(a)
-
-# 计算size()
-print(a.shape)    # 跟numpy一样，用shape不用加括号，最简洁
-print(a.size()[1])  # 获得tensor的size形状
-
-# 计算绝对值/平方根/除法/对数
-b = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-z = b.abs()   # 不带后缀，不修改原tensor
-z = b.abs_()  # 带后缀，修改原tensor
-c = torch.Tensor([4,16])
-z = c.sqrt()  # 开方
-z = c.div(2)  # 除法
-z = c.exp()   # e的指数
-z = c.log()   # 对数
-z = c.pow(2)  # 幂次
-z = c**2      # 平方
-z = c + c     # 加法
-z = c*c       # 按位相乘
-z = c.mul(c)  # 按位相乘
-
-# 计算点积
-a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-b = torch.FloatTensor([[1,2],[2,1],[0,1]])
-c = a.mm(b) # 点积
-print(c)
-
-# 格式转换
-a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-an = a.numpy()  # 把tensor转化为numpy
-at = torch.from_numpy(an)  # 把numpy转化为tensor
-b = a.tolist()  # tensor to list
-
-an[0,0] = 10   # tensor与array共享内存，所以任何一个变化会引起另一个变化
-print(an)
-print(at)
-
-# 矩阵的转秩
-b = a.t()  # tensor转秩
-print(a)
-print(b)
-
-# 在图像处理中，有采用transpose([1,2,0])把tensor的CxHxW转换成图像的HxWxC
-
-# 计算求和/求平均/求最大
-a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-b = a.sum()  # 求和
-c = a.mean() # 求平均
-d = a.min(dim=0)
-d = a.max(dim=1)  # 求最大,y方向（把数据拍成一个y轴）
-print(d[0][0], d[1][0])
-# 注意max的输出结果很特殊，第一行是最大值列表，第二行是最大值标签列表
 
 
 
-# 取整/求商/取余
-a = torch.FloatTensor([1.75,3.1415])
-b = a.round()  # 四舍五入
-b = a.ceil()   # 上取整
-b = a.floor()  # 下取整
-b = a%2
-
-# 截断
-a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-b = a.clamp(2,4)  # 2,4之间的值，超出的则取2，4
-
-# 调整tensor的形状
-a = torch.arange(0,6)
-b = a.view(2,3)   # view相当于python中的reshape()
-c = a.view(-1,2)  # view相当于python中的reshape()
-d = a.resize(3,1)  # 据说跟view的差别在于他可以修改tensor原尺寸，但实验没成功
-
-d = b.unsqueeze(1)  # 待测试
-
-# tensor转标量: 往往需要指定dim, 相当于numpy中的axis
-# dim(axis)等于哪个轴，该轴变为1，也就是沿着该轴挤压(或叫沿着该轴坍缩)
-# 比如(2,3,2) dim=1就会变成(2,1,2)
-a = torch.FloatTensor([[1,-2,3],[-4,5,-6]])
-z = a.mean()  # 均值
-z = a.sum(dim=1)   # 求和
-z = a.median()  # 中位数
-z = a.mode()    # 众数
-z = a.var()    # 方差
-z = a.std()    # 标准差 = 方差的开方
-
-
-'''
-Q. 如何在pytorch中实现手动广播法则/调整张量的维度？
-'''
-a = torch.ones(3,2)
-b = torch.zeros(2,3,1)
-a.expend(2,3,2)
-
-x = torch.linspace(-1, 1, 5)   # 初始tensor: 一维，5
-y = torch.unsqueeze(x, dim=1)  # 扩维：二维，5x1
-z = x.view(-1,1)               # 扩维：二维，5x1
 
 
 '''
@@ -360,13 +214,7 @@ m = torch.nn.MaxPool2d(stride=2, kernel_size=2)
 m = torch.nn.ReLU()
 
 
-# nn.Sequential()  创建组合模型
-# model.modules()  输出模型里边所有子模型，包括sequential()模型和层模型
-# model.parameters()  输出模型里边所有参数，含数值和尺寸
-# model.state_dict()  输出模型状态：也即模型里边所有参数/偏置的字典
-# model.eval() 设置模型在测试模式
-# model.train() 设置模型在训练模式
-# model.zero_grad() 设置模型所有参数梯度归零
+
 
 import torch.nn as nn
 # 单层模型
@@ -661,69 +509,6 @@ if 'dog' in imgs[0].split('/')[-1]:
 '''
 Q. 如何通过函数对图形进行变换(放大缩小，旋转，裁剪，等等)？
 '''
-# 使用transform模块，简称T模块
-# 先显示原始图片
-from PIL import Image
-import matplotlib.pyplot as plt
-root = '/Users/suliang/MyDatasets/DogsVSCats/train/dog.7014.jpg'
-data = Image.open(root)
-plt.imshow(data)
-
-from torchvision import transforms as T
-
-# transform1: 缩放和改尺寸, resize(等效于scale, scale已经废弃用resize替代了)
-transform1 = T.Compose([T.Resize([64,64])])  # 改为指定尺寸HxW，如果1个数则只改短边但保持长宽比不变
-new_data = transform1(data)
-plt.imshow(new_data)
-
-# transform2: 切割, CenterCrop
-transform2_1 = T.Compose([T.CenterCrop((224,400))])  # 基于中心点切出HxW图片
-new_data = transform2_1(data)
-plt.imshow(new_data)
-transform2_2 = T.Compose([T.RandomResizedCrop(224)]) # 随机切，然后再扩展成size尺寸
-new_data = transform2_2(data)
-plt.imshow(new_data)
-
-# transform3: 翻转, RandomHorizontalFlip
-transform3 = T.Compose([T.RandomHorizontalFlip()])  # 随机（0.5的概率）水平翻转
-new_data = transform3(data)
-plt.imshow(new_data)
-
-# transform4: 变为张量，ToTensor
-# - 一方面把图片HxWxC，转换为张量的CxHxW
-# - 另一方面把图片(0,255)，转换为张量(0,1)
-transform4_1 = T.Compose([T.ToTensor()])  # 图像转成tensor
-PtoT = transform4(data)
-print('tensor size: {}'.format(PtoT.shape))
-print(PtoT.min(), PtoT.max())
-
-transform4_2 = T.Compose([T.ToPILImage()])  # tensor转成图像- 也可直接用transpose
-TtoP = transform4_2(PtoT)
-plt.imshow(TtoP)
-
-TtoP = np.transpose(PtoT, (1,2,0))  # ToPILImage所做的事情跟transpose是一样的
-plt.imshow(TtoP)
-
-# transform5: 归一化，一般归一化到(-1,1), 因为
-# new_value = (value - mean)/std, 后续恢复图片也要进行归一化的逆操作
-# 归一化只针对tensor，所以ToTensor与Normalize一般一起做。
-# 由于totensor已经把value转换到(0,1), 为了标准化到(-1,1)需要合适的均值/方差
-# 简化处理是设置mean=0.5, std=0.5，即(value-0.5)/0.5得到(-1,1)的区间
-transform5 = T.Compose([T.ToTensor(),
-                        T.Normalize(mean=[0.5,0.5,0.5], std=[0.5,0.5,0.5])])
-new_data = transform5(data)
-print('tensor size: {}'.format(new_data.shape))
-print(new_data.min(), new_data.max())
-print('mean: {}, std: {}'.format(new_data.mean(), new_data.std()))
-
-# 标准化以后的数据转换回来再显示
-new_data = new_data*0.5 + 0.5
-#TtoP = np.transpose(new_data, (1,2,0)) 
-TtoP = T.ToPILImage()(new_data) # 注意这种蛋疼写法，T.xxx要么嵌套在compose()里，要么多一对括号
-plt.imshow(TtoP)
-
-
-# transform6: 图像颜色高斯波动
 
 
 
@@ -765,7 +550,8 @@ resnet18 = models.resnet18(pretrained=True)         # 下载完成, 47M (网络�
 # 引入残差模块(恒等映射)，进一步解决高层数的梯度消失问题(比普通ReLU更有效)，真正让网络达到上百甚至上千层
 # 残差模块就是添加短路连接shortcut，可以让网络更加深
 #
-resnet34 = models.resnet34(pretrain=True)             # 待下载
+# 
+resnet34 = models.resnet34(pretrained=True)             # 下载
 
 resnet50 = models.resnet50(pretrained=True)           # 待下载
 

@@ -17,7 +17,7 @@ import torch.nn as nn
 # 创建模型方法1
 class AAA(torch.nn.Module):
     def __init__(self):
-        super(Module, self).__init__()
+        super(AAA, self).__init__()
         self.conv1 = nn.Conv2d(1, 20, 5)
         self.conv2 = nn.Conv2d(20, 20, 5)
         

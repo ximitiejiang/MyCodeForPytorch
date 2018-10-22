@@ -81,8 +81,8 @@ plt.imshow(TtoP)
 
 '''--------------------------------------------------------
 Q. 如何利用torchvision的datasets导入数据？
-- 首先还是下载数据集，然后可以利用pytorch统一化的API来方便地导入这些数据集
-- 可用数据集的API：
+(1) 首先还是下载数据集，然后可以利用pytorch统一化的API来方便地导入这些数据集
+(2) 可用数据集的API：
     MNIST
     Fashion-MNIST
     EMNIST
@@ -97,6 +97,10 @@ Q. 如何利用torchvision的datasets导入数据？
     STL10
     SVHN
     PhotoTour
+(3) 导入方法分三种：
+    法1：已有API的数据集导入，用API导入
+    法2：没有API的数据集，且图片按类别存放，用dataloader
+    法3：没有API的数据集，且图片按？，用imageloader
 -----------------------------------------------------------
 '''
 from torchvision import datasets, transforms
@@ -104,17 +108,30 @@ transform = transforms.Compose([transforms.ToTensor(),
                                 transforms.Normalize(mean=[0.5,0.5,0.5],
                                                      std=[0.5,0.5,0.5])])
 # 导入CIFAR10
-trainset = datasets.CIFAR10(root = '/Users/suliang/MyDatasets/CIFAR10/',
+trainset = datasets.CIFAR10(root = '/home/ubuntu/MyDatasets/CIFAR10/',
                             transform = transform,
                             train = True,
                             download = True)
-testset = datasets.CIFAR10(root = '/Users/suliang/MyDatasets/CIFAR10/',
+testset = datasets.CIFAR10(root = '/home/ubuntu/MyDatasets/CIFAR10/',
                            transform = transform,
                            train = False,
                            download = True)
 classes = ('plane', 'car', 'bird', 'cat', 'deer', 
            'dog', 'frog', 'horse', 'ship', 'truck')
-data, labels = trainset[0]
+
+# 导入Imagenet-12
+
+
+# 查看导入的数据的基本属性
+data, labels = trainset[4]  #导入的是turple (data, labels), data = CHW
+print(data.shape)
+print(classes[labels])
+data = data*0.5 + 0.5  # 归一化的逆运算，但如果normalize的值不是一个值，怎么逆运算？
+
+import matplotlib.pyplot as plt
+import numpy as np
+data = np.transpose(data,(1,2,0))
+plt.imshow(data)
 
 '''--------------------------------------------------------
 Q. 如何导入非标数据集？

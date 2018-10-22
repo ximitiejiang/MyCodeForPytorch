@@ -48,12 +48,12 @@ print(a[1][1])    # 切片
 a.requires_grad
 a.grad
 a.data   # tensor数据，浅复制
-a.item   # 
-a.size()
-a.shape
-a.shape[1]
-data = data.to(device)
-label = label.to(device)
+a.item   #  
+a.size() # 等同于shape
+a.shape  # 维度
+a.shape[1]  #第2个维度
+data = data.to(device)  # tensor送到设备
+label = label.to(device)  # tensor送到设备
 
 
 '''--------------------------------------------------------

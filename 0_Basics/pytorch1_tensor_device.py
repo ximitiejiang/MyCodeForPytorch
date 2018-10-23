@@ -48,8 +48,8 @@ print(a[1][1])    # 切片
 a.requires_grad
 a.grad
 a.data   # tensor数据，浅复制
-a.item   #  
-a.size() # 等同于shape
+a.item() # 用于把单元素tensor转化为数值标量,比如一个int值 
+a.size() # 等同于shape，可用a.size(0),a.size(1)分别去每个维度的大小。
 a.shape  # 维度
 a.shape[1]  #第2个维度
 data = data.to(device)  # tensor送到设备

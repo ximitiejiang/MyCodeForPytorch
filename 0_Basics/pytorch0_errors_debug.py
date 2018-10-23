@@ -27,6 +27,7 @@ but found type torch.cuda.FloatTensor for argument #2 'weight'
 这种写法不会改变变量的属性，因为to命令不是inplace方式，需要赋值操作，改为：
         inputs = inputs.to(device)
         labels = labels.to(device)
+但注意model是不需要这么写的，model可以直接写成model.to(device)
 -----------------------------------------------------------
 '''
 # 错误写法
@@ -36,3 +37,116 @@ labels.to(device)
 inputs = inputs.to(device)
 labels = labels.to(device)
 
+
+
+'''--------------------------------------------------------
+Q. GPU跟CPU速度差多少？如何提高训练速度去部署到多个GPU上运行模型？
+
+用实例对比CPU和GPU的性能差别：基于CIFAR10数据集，训练resnet18迁移模型
+img数据集50000张训练图片，每张3x224x224(resize之后), batch_size=4, 结果如下：
+- cpu：1个epoch耗时38m42s
+- gpu：1个epoch耗时1m3s，GPU比CPU快了30倍，网络越复杂，GPU比CPU优势越大
+需要区分把model转为cuda model和把tensor转为cuda tensor的区别
+- model.to(device)        # model的转换一次就可以，不是inplace也ok
+- data = data.to(device)  # data的转换每个data都需要，且因为不是inplace所以要赋值
+-----------------------------------------------------------
+'''
+# 基于cpu
+device = torch.device('cpu')
+model.to(device)
+# 基于gpu
+device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu') #cuda起始编号为0,而不是第0个cuda
+if torch.cuda.device_count() > 1:
+    model = nn.DataParallel(model,device_ids=[0, 1]) # 如果不写ids则默认使用全部GPU，需注意编号与前句device对应
+model.to(device)
+
+
+'''--------------------------------------------------------
+Q. 如何实验验证数据分配给不同GPU了？
+
+通过在model内部嵌入代码打印model的input，可以发现：
+- 在inputs = input.to(device) 这句话时基于device的cuda个数，就把input分成几份
+- 分成几份inputs就会调用几次model，从而打印几次model内部代码
+- 但最终的outputs = model(inputs)输出又会拼接model内部的几个outputs生成一个outputs输出
+参考：https://pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html?highlight=dataparallel
+-----------------------------------------------------------
+'''
+# 简单验证
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
+
+# Parameters and DataLoaders
+input_size = 5
+output_size = 2
+
+batch_size = 30
+data_size = 100
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+class RandomDataset(Dataset):
+
+    def __init__(self, size, length):
+        self.len = length
+        self.data = torch.randn(length, size)
+
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __len__(self):
+        return self.len
+
+rand_loader = DataLoader(dataset=RandomDataset(input_size, data_size),
+                         batch_size=batch_size, shuffle=True)
+
+class Model(nn.Module):
+    # Our model
+    def __init__(self, input_size, output_size):
+        super(Model, self).__init__()
+        self.fc = nn.Linear(input_size, output_size)
+
+    def forward(self, input):
+        output = self.fc(input)
+        print("\tIn Model: input size", input.size(),
+              "output size", output.size())
+
+        return output
+
+model = Model(input_size, output_size)
+if torch.cuda.device_count() > 1:
+  print("Let's use", torch.cuda.device_count(), "GPUs!")
+  # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+  model = nn.DataParallel(model)
+
+model.to(device)
+
+for data in rand_loader:
+    input = data.to(device)
+    output = model(input)
+    print("Outside: input size", input.size(),
+          "output_size", output.size())
+    
+    
+'''--------------------------------------------------------
+Q. 为什么model生成的outputs不能直接使用，且报错RuntimeError: Expected object of 
+type torch.LongTensor but found type torch.cuda.LongTensor for argument #2 'other'
+
+- 需要正确认识outputs的组成
+- 需要二次处理outputs的内容
+- 需要仔细区分torch.max()函数与python的max函数区别：torch.max()返回2个tensor,
+  第一个tensor是最大值即概率值，第二个tensor是最大值位置即分类的位置
+-----------------------------------------------------------
+'''
+# 比如10分类问题，model的outputs类似如下
+labels = torch.tensor([2,7,9,1])
+outputs = torch.randn(4,10)
+_, preds = torch.max(outputs, 1)      # 取torch.max()函数第二个返回tensor即分类位置
+accuracy = torch.sum(preds == labels.data) # labels不能直接跟preds进行运算因为preds为long tensor
+
+    
+'''--------------------------------------------------------
+Q. 为什么GPU计算生成的变量无法绘图？
+
+-----------------------------------------------------------
+'''

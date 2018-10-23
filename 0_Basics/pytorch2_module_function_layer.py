@@ -53,6 +53,8 @@ model.conv2
 '''--------------------------------------------------------
 Q. module定义好以后有哪些可用的属性？
 这些属性在后续的train中都会使用到
+- model可以通过切片调用
+- parameters怎么调用：model.parameters()循环调用，model.named_parameters()循环调用
 -----------------------------------------------------------
 '''
 import torch.nn as nn    
@@ -60,21 +62,41 @@ model = nn.Sequential(
           nn.Conv2d(1,20,5),
           nn.ReLU(),
           nn.Conv2d(20,64,5),
-          nn.ReLU())
-model.modules()          # 输出模型里边所有子模型，包括sequential()模型和层模型
-model.to(device)         # 把模型送到运行设备
+          nn.ReLU(),
+          nn.Linear(64,10))
+# model的切片和调用：
+model[1]  # 调用层：用Sequential声明的model
+model.fc  # 调用层：用OrderedDict声明的model
+model[2].bias  # 调用参数
+# 输出模型里边所有子模型，包括sequential()模型和层模型
+model.modules()   
+# 把模型送到运行设备       
+model.to(device)         
     model = model.to(device)
-model.parameters()       # 返回所有参数tensor
+# 模型参数方法: 返回一个generator对象，可迭代取出tensor
+model.parameters()       
     for param in model.parameters():
         param.requires_grad = False
-model.named_parameters() # 返回所有参数tensor的[名称, tensor]
-    for name, tensor in model.named_parameters():
+        print(param)
+    for param in model[4].parameters():
+        print(param)
+# 模型的名称和参数方法：返回一个generator对象，可迭代取出[名称, tensor]
+model.named_parameters() 
+    for name, layer_para in model.named_parameters():
+        print(layer_para)
         print(name)
-model.state_dict()       # 输出模型状态字典：包括参数和缓存的{名字和数值}，{key:value}
-    
-model.train()            # 设置模型在训练模式
-model.eval()             # 设置模型在测试模式
-model.zero_grad()        # 设置模型所有参数梯度归零    
+    named = []
+    for name, _ in model.named_parameters():
+        named.append(name)
+    print(named)
+        
+# 输出模型状态字典：包括参数和缓存的{名字和数值}，{key:value}
+model.state_dict()       
+# 设置模型在训练模式,测试模式    
+model.train()            
+model.eval()   
+# 设置模型所有参数梯度归零           
+model.zero_grad()           
     
 
 '''--------------------------------------------------------

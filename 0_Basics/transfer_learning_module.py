@@ -112,7 +112,7 @@ print('Length of trainset:{}'.format(len(trainset)))
 
 # -----------------3. 定义训练参数-----------------
 batch_size = 4
-num_epoch = 10
+num_epoch = 4
 #device = torch.device('cpu')
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu') #cuda起始编号为0,而不是第0个cuda
 if torch.cuda.device_count() > 1:
@@ -140,14 +140,28 @@ since = time.time()
 # 是否需要设置这步model.train()
 #model.train()
 
+from tqdm import tqdm
+import torchnet as tnt
+from torchnet.logger import VisdomPlotLogger, VisdomLogger
+# 其中VisdomPlotLogger用于plot各种线条
+#     VisdomLogger用于绘制confusion matrix
+
+loss_meter = tnt.meter.AverageValueMeter()
+confusion_matrix = tnt.meter.ConfusionMeter(10)
+import visdom
+
 train_acc_hist = []   
 train_loss_hist = []
 for epoch in range(num_epoch):
     print(epoch+1, '/' , num_epoch)     
     
+    loss_meter.reset()
+    confusion_matrix.reset()
+    
+    
     running_loss = 0.0
     running_corrects = 0
-    for inputs, labels in trainloader: # dataloader输出形式：iter(data, labels),所以可以迭代
+    for inputs, labels in tqdm(trainloader): # dataloader输出形式：iter(data, labels),所以可以迭代
         # 数据转换为torch.cuda.FloatTensor
         inputs = inputs.to(device)
         labels = labels.to(device)
@@ -167,12 +181,26 @@ for epoch in range(num_epoch):
         # 3.epoch loss
         running_loss += loss.item() * inputs.size(0)   # 计算4张图的总损失，并累加
         running_corrects += torch.sum(preds == labels.data)
+        
+        
+        loss_meter.add(loss.item())
+        confusion_matrix.add(outputs.detach(), labels.detach())
     
     epoch_loss = running_loss / len(trainloader.dataset)  # 计算1个epoch下，平均每张图的损失
     epoch_acc = running_corrects.double() / len(trainloader.dataset)
     print('Loss: {:.4f} Acc: {:.4f}'.format(epoch_loss, epoch_acc))  
     train_acc_hist.append(epoch_acc)    
     train_loss_hist.append(epoch_loss)
+    
+    loss_logger = VisdomPlotLogger('line', win='loss', opts={'title':'Loss'}, port=8097, server='localhost')
+    acc_logger = VisdomLogger('heatmap', win='acc', opts={'title': 'Confusion matrix','columnnames': list(range(10)),'rownames': list(range(10))}, port=8097, server='localhost')
+    
+    #train_loss_logger.log(state['epoch'], meter_loss.value()[0])
+    #confusion_logger.log(confusion_meter.value())
+    
+    loss_logger.log(epoch,loss_meter.value()[0])
+    acc_logger.log(confusion_matrix.value())
+
 
 time_elapsed = time.time() - since
 print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
@@ -182,18 +210,27 @@ print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_ela
 ahist = []
 lhist = []
 
-ahist = [h.cpu().numpy() for h in train_acc_hist]
-lhist = [h.cpu().numpy() for h in train_loss_hist]
+ahist = [h.cpu().numpy() for h in train_acc_hist]  # train_acc_hist为list[tensor]
+lhist = [h for h in train_loss_hist]               # train_loss_hist为list[float]
 
-plt.title("Validation Accuracy vs. Number of Training Epochs")
+plt.title("Loss")
 plt.xlabel("Training Epochs")
 plt.ylabel("Loss")
-plt.plot(range(1,num_epoch+1),train_loss_hist,label="Pretrained")
+plt.plot(range(1,num_epoch+1), lhist,label="Pretrained")
 plt.ylim((0,1.))
 plt.xticks(np.arange(1, num_epoch+1, 1.0))
 plt.legend()
 plt.show()   
 
+
+plt.title("Accuracy")
+plt.xlabel("Training Epochs")
+plt.ylabel("Acc")
+plt.plot(range(1,num_epoch+1), ahist,label="Pretrained")
+plt.ylim((0,1.))
+plt.xticks(np.arange(1, num_epoch+1, 1.0))
+plt.legend()
+plt.show()   
 
 # -----------------5. 验证及训练可视化-----------------
 print('Start validating...')

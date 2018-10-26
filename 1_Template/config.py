@@ -14,12 +14,12 @@ class DefaultConfig(object):  # 这个object作用是？？？
     test_data_root = '/home/ubuntu/MyDatasets/DogsVSCats/test/'
     load_model_path = 'checkpoints/model.pth'
     
-    batch_size = 64
+    batch_size = 8
     use_gpu = True
     num_workers = 2
     
-    max_epoch = 1
-    lr = 0.1
+    max_epoch = 10
+    lr = 0.01
     lr_decay = 0.95
     weight_decay = 1e-4
     

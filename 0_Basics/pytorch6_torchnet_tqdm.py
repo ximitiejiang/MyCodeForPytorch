@@ -31,7 +31,13 @@ acc_logger = VisdomLogger('heatmap', win='acc', opts={'title': 'Confusion matrix
 
 # 添加数据进量表
 loss_meter.add(loss.item()) 
-confusion_meter.add(outputs.detach(), labels.detach())
+confusion_meter.add(outputs.detach(), labels.detach())  # outputs = N个样本*K个类，labels = N个样本或NxK的独热编码
+                                                        # 生成K*K的confusion表，横坐标是真实值(ground truth), 纵坐标是预测值
+
+# 基于confusion meter计算精度： 
+# 注意confusion meter.value()是代表[[00,01],[10,11]]的形式，而显示的matrix原点在左下角，显示为[[10,11],[00,01]
+# 所以计算精度时是用矩阵00,11的正确值，除以总和。
+accuracy = 100. * (confusion_meter.value()[0][0] + confusion_meter.value()[1][1]) / (confusion_meter.value().sum())
 
 # 记录器记录数据(跟visdom相比，无需设置append update, 因为默认就是更新)
 loss_logger.log(epoch,loss_meter.value()[0])

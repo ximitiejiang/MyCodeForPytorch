@@ -146,7 +146,23 @@ accuracy = torch.sum(preds == labels.data) # labels不能直接跟preds进行运
 
     
 '''--------------------------------------------------------
-Q. 为什么GPU计算生成的变量无法绘图？
+Q. 为什么使用torchnet的confusion meter时报错说输入matrix的size不对？
+AssertionError: number of predictions does not match size of confusion matrix
 
+confusion_logger.log(confusion_meter.value())
 -----------------------------------------------------------
 '''
+# 原因在于创建confusion_meter时需要定义的唯一参数是n_class，他需要跟模型最终输出的n_class匹配
+confusion_meter = meter.ConfusionMeter(n_class) 
+
+
+'''--------------------------------------------------------
+Q. 为什么一个简单Alexnet使用Adam作为求解器loss爆炸了，？
+-----------------------------------------------------------
+'''
+# 原来的optimizer，batch_size=128
+optimizer = torch.optim.Adam(model.parameters(), lr = 0.01, weight_decay = 0.95)
+
+# 换成SGD把lr改小，并且batch_size = 8，loss就收缩正常了
+optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+

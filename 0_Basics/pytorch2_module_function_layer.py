@@ -83,7 +83,7 @@ model.parameters()
 # 模型的名称和参数方法：返回一个generator对象，可迭代取出[名称, tensor]
 model.named_parameters() 
     for name, layer_para in model.named_parameters():
-        print(layer_para)
+        print(name, layer_para.data.std(), layer_para.grad.data.std())
         print(name)
     named = []
     for name, _ in model.named_parameters():
@@ -97,7 +97,8 @@ model.train()
 model.eval()   
 # 设置模型所有参数梯度归零           
 model.zero_grad()           
-    
+
+   
 
 '''--------------------------------------------------------
 Q. 如何定义各个层? 

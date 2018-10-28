@@ -16,7 +16,7 @@ Created on Wed Oct 24 08:22:36 2018
 
 """
 
-from .Basicmodule import BasicModule  # 相对导入
+from models.Basicmodule import BasicModule  # 相对导入
 import torch.nn as nn
 
 class AlexNet(BasicModule):

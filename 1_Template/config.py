@@ -8,7 +8,7 @@ Created on Tue Oct 23 14:55:43 2018
 
 class DefaultConfig(object):  # 这个object作用是？？？
     
-    model = 'alexnet'
+    model = 'resnet'
     
     train_data_root = '/home/ubuntu/MyDatasets/DogsVSCats/train/'
     test_data_root = '/home/ubuntu/MyDatasets/DogsVSCats/test/'
@@ -18,7 +18,7 @@ class DefaultConfig(object):  # 这个object作用是？？？
     use_gpu = True
     num_workers = 2
     
-    max_epoch = 10
+    max_epoch = 4
     lr = 0.01
     lr_decay = 0.95
     weight_decay = 1e-4

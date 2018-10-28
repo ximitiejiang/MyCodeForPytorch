@@ -98,3 +98,7 @@ text = ""
 for char in tqdm(["a", "b", "c", "d"]):  # tqdm()包装list
     text = text + char
     time.sleep(0.5)
+    
+# 对于有的iterable object，由于无法统计总数，tqdm就无法显示进度条，
+# 而只能显示速度。所以尽可能把tqdm安置在有len的对象前面
+# 

@@ -166,3 +166,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr = 0.01, weight_decay = 0.95)
 # 换成SGD把lr改小，并且batch_size = 8，loss就收缩正常了
 optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
+
+'''--------------------------------------------------------
+Q. 如何在调试时查看神经网络各层输出和哥哥参数的梯度？
+-----------------------------------------------------------
+'''

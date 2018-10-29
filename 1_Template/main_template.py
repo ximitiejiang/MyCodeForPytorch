@@ -5,10 +5,6 @@ Created on Tue Oct 23 14:37:56 2018
 
 @author: ubuntu
 
-
-2. 函数形参写法的功能和特点?
-def test(**kwargs):
-
 """
 import numpy as np
 import visdom

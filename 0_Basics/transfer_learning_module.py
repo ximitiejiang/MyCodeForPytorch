@@ -63,7 +63,7 @@ import os
 import copy
 # -----------------1. 定义模型-----------------
 input_size = 224  # 适合稍大尺寸图片
-model = models.resnet18(pretrained=True)
+model = models.vgg19(pretrained=True)
 for param in model.parameters(): # 取出每一个参数tensor
     param.requires_grad = False  # 原始模型的梯度锁定
 in_fc = model.fc.in_features

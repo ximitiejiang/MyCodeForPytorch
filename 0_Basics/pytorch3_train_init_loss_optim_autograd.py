@@ -6,6 +6,34 @@ Created on Sat Oct 20 16:11:48 2018
 @author: ubuntu
 """
 
+'''--------------------------------------------------------
+Q. 如何使用模型的__init__()函数和forward()函数？
+-----------------------------------------------------------
+'''
+# 模型初始化就会自动调用__init__()函数
+import torch
+class AAA(torch.nn.Module):
+    def __init__(self, x):
+        super(AAA,self).__init__()
+        print('This is class init! print: {}'.format(x))
+    
+    def forward(self,x):
+        print('This is class foward! print: {}'.format(x))
+
+aaa = AAA(99)  # 在类中传入的参数： 创建类的对象，就会自动调用__init__()函数
+
+outputs = aaa(258)  # 在对象中传入的参数： 调用对象默认方法，就会自动调用forward()函数
+                    # forward()是对象默认方法，aaa(258) = aaa.forward(258)
+
+
+'''--------------------------------------------------------
+Q. 如何使用继承模型已有的backward()函数？
+-----------------------------------------------------------
+'''
+
+
+
+
 
 '''--------------------------------------------------------
 Q. 如何定义优化器optimizer？

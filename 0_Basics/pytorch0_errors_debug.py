@@ -168,6 +168,12 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
 
 '''--------------------------------------------------------
-Q. 如何在调试时查看神经网络各层输出和哥哥参数的梯度？
+Q. 如何在调试时查看神经网络各层输出和各个参数的梯度？
 -----------------------------------------------------------
 '''
+# 查看各层输出：通过n/s两个ipdb命令进入相应层，查看outputs, outputs.size()
+outputs.size()
+# 查看各层输出： 
+for n, p in model.named_parameters(): print(n, p.data.std(), p.grad.data.std())
+
+

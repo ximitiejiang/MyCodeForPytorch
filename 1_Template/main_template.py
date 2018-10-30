@@ -12,7 +12,9 @@ from data.dataset import DogCat   # 导入数据类
 from config import opt  # 导入配置类的对象
 #import models        # 导入包，不能直接调用模块，因为模块没导入，还需要在init里边再预导入模块
 from models.Alexnet import AlexNet # 导入模型类
+from models.Vgg16 import VGG16
 from models.Resnet import ResNet34
+from models.Pretrainedmodels import PretrainedModels
 
 import torch
 import torch.nn as nn
@@ -86,14 +88,14 @@ def val(model, dataloader, num_classes, vis):
 def train(**kwargs):
     # 初始化可视化环境
     vis = visdom.Visdom(env='main')    
+    
     # 1. 定义模型
     num_classes = 2
     
 #    model = AlexNet(num_classes= num_classes)
-    model = ResNet34(num_classes = num_classes)
-    
-#    from torchvision import models
-#    model = models.alexnet(pretrained =True)
+#    model = ResNet34(num_classes = num_classes)
+    model = VGG16(num_classes = num_classes)
+#    model = PretrainedModels('vgg16', num_classes = num_classes)
     
     
     # 2. 定义数据

@@ -205,3 +205,23 @@ torch.cuda.get_device_capability(0)
 torch.cuda.get_device_name(0)
 torch.cuda.is_available()
 
+
+'''--------------------------------------------------------
+Q. 对view和reshape函数的认识？
+参考：https://blog.csdn.net/jacke121/article/details/80824575
+-----------------------------------------------------------
+'''
+# view()函数: 调用view之前最好先contiguous,比如x.contiguous().view()，因为view需要tensor的内存是整块的 
+# 如果在view之前用了transpose, permute等，需要用contiguous()来返回一个contiguous copy
+# 判断是否contiguous用torch.Tensor.is_contiguous()函数
+import torch 
+x = torch.ones(10, 10) 
+x.is_contiguous() # True 
+x.transpose(0, 1).is_contiguous() # False 
+x.transpose(0, 1).contiguous().is_contiguous() # True
+
+x.permute(0,1).is_contiguous()
+
+# 在pytorch的最新版本0.4版本中，增加了torch.reshape(), 这与 numpy.reshape 的功能类似。
+# 它大致相当于 tensor.contiguous().view()
+x.transpose(0,1).reshape(-1,1)

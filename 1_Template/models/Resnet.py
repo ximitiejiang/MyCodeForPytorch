@@ -5,14 +5,6 @@ Created on Wed Oct 24 08:22:36 2018
 
 @author: ubuntu
 
-1. class中变量的来源：
-    - 可以从init函数的input形参，然后在init里边用self.xx转化为类全局变量
-    - 可以在任意函数形参输入，只用于这个函数内做局部变量
-    - 可以在任意函数内定义新变量，用于本函数，或self.xx转化为类全局变量
-
-2. 类继承，可以获得原来类的方法，比如.load(), .save()
-   类继承，需要先导入原始类，比如导入nn.Module，就要先导入torch.nn
-                            比如导入BasicModule，就要先导入BasicModule
 
 """
 

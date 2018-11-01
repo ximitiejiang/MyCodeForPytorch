@@ -209,19 +209,39 @@ torch.cuda.is_available()
 '''--------------------------------------------------------
 Q. 对view和reshape函数的认识？
 参考：https://blog.csdn.net/jacke121/article/details/80824575
+
+group1: transpose跟permute的功能基本一样，用于对高维矩阵进行各种转秩
+group2: view和reshape的功能基本一样，用于把高维矩阵展平
+group_m: 这个函数介于group1-group2之间，group1做完会有not contiguous的问题，
+         需要使用contiguous()函数把tensor空间连续化，否则view函数无法使用
+         但如果group2使用reshape函数就没有这个问题
 -----------------------------------------------------------
 '''
-# view()函数: 调用view之前最好先contiguous,比如x.contiguous().view()，因为view需要tensor的内存是整块的 
-# 如果在view之前用了transpose, permute等，需要用contiguous()来返回一个contiguous copy
-# 判断是否contiguous用torch.Tensor.is_contiguous()函数
-import torch 
-x = torch.ones(10, 10) 
-x.is_contiguous() # True 
-x.transpose(0, 1).is_contiguous() # False 
-x.transpose(0, 1).contiguous().is_contiguous() # True
+# group 1的使用
+import torch
+x = torch.ones(2,4)
+y = x.transpose(1,0)  # 把第1个维度跟第0个维度交换，即为把size [m,n]变为[n,m]
+z = x.permute(1,0)    # 跟transpose一样
 
-x.permute(0,1).is_contiguous()
+# group2的使用
+import torch
+x = torch.ones(2,4)
+y = x.view(-1,1)           # view改变矩阵维度形式，变为n行1列 (这是常用的layer输入)
 
-# 在pytorch的最新版本0.4版本中，增加了torch.reshape(), 这与 numpy.reshape 的功能类似。
-# 它大致相当于 tensor.contiguous().view()
-x.transpose(0,1).reshape(-1,1)
+x = torch.arange(1,10,1)
+y = x.view(-1,1)           # view的功能2：把1维单行变为2维单列。因为1维数据model/layer不能处理
+
+# group_m的介入
+import torch
+x = torch.ones(2,4)
+x.is_contiguous()
+
+y = x.transpose(1,0)      # group1函数之后，发现contiguous=False
+y.is_contiguous()
+
+y.view(-1,1)              # group2函数用view报错：因为view需要tensor的内存是整块的
+y.contiguous().view(-1,1) # group2函数用contiguous + view修正不报错
+
+y.reshape(-1,1)           # group2函数用reshape正确：它大致相当于 tensor.contiguous().view()
+
+

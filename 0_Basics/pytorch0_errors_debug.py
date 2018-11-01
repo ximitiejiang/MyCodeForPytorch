@@ -177,3 +177,15 @@ outputs.size()
 for n, p in model.named_parameters(): print(n, p.data.std(), p.grad.data.std())
 
 
+
+'''--------------------------------------------------------
+Q. 为什么一个已经调通的程序，在重启电脑后重新运行报如下错误：
+ConnectionRefusedError: [Errno 111] Connection refused
+-----------------------------------------------------------
+'''
+# 根本原因是程序里边定义了visdom的服务server,这需要在运行前启动visdom server
+python -m visdom.server
+
+
+
+

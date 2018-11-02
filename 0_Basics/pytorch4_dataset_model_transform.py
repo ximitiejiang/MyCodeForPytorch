@@ -19,9 +19,20 @@ print(fullpath)
 # 先显示原始图片
 from PIL import Image
 import matplotlib.pyplot as plt
-root = '/Home/MyDatasets/DogsVSCats/train/dog.7014.jpg'
+import numpy as np
+root = '/home/ubuntu/MyDatasets/DogsVSCats/train/dog.7014.jpg'
 data = Image.open(root)
 plt.imshow(data)
+
+# Pic to Tensor的过程
+img = data.convert('RGB')   # 先数字化RGB, size=(480,359)
+img = np.asarray(img, dtype=np.float32) #再array化, shape=(359,480,3)
+img.min()
+img.max()
+img = img.transpose((2,1,0))
+
+
+plt.imshow(img)
 
 from torchvision import transforms
 
@@ -47,9 +58,28 @@ plt.imshow(new_data)
 # - 一方面把图片HxWxC，转换为张量的CxHxW
 # - 另一方面把图片(0,255)，转换为张量(0,1)
 transform4_1 = transforms.Compose([transforms.ToTensor()])  # 图像转成tensor
-PtoT = transform4(data)
+PtoT = transform4_1(data)
 print('tensor size: {}'.format(PtoT.shape))
 print(PtoT.min(), PtoT.max())
+
+# 如果不嵌套在Compose里边
+data.size
+t1 = transforms.ToTensor()(data)  # 
+t1.shape
+t1.max()  # 已经在totensor中归一化了
+t1.min()  # 已经在totensor中归一化了
+mean=[0.485, 0.456, 0.406]
+std=[0.229, 0.224, 0.225]
+t2 = transforms.Normalize(mean, std)(t1)  # 规范化
+t2.max()
+t2.min()
+
+# 反过来走一遍
+t2 = (t2.numpy() * 0.225 + 0.45).clip(min=0, max=1)  # 逆规范化
+t2.max()
+t2.min()
+t3 = transforms.ToPILImage()(t2)  # ??????
+
 
 transform4_2 = transforms.Compose([transforms.ToPILImage()])  # tensor转成图像- 也可直接用transpose
 TtoP = transform4_2(PtoT)

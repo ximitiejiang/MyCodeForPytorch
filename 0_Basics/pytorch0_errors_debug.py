@@ -187,5 +187,17 @@ ConnectionRefusedError: [Errno 111] Connection refused
 python -m visdom.server
 
 
+'''--------------------------------------------------------
+Q. 为什么原来在mac上良好运行的代码在ubuntu不能运行报错：[Errno 2] No such file or directory
 
+文件打不开或者文件路径错误
+-----------------------------------------------------------
+'''
+# 原来的root
+root = '/Home/ubuntu/MyDatasets/DogsVSCats/train/dog.7014.jpg'
 
+# 通过如下命令查看目录发现：目录写得有问题，mac支持/Home/，而ubuntu支持/home/，大小写不同
+import os
+path = '~/MyDatasets/DogsVSCats/train/dog.7014.jpg'  # 待获得完整路径的目录名要以～开头
+fullpath = os.path.expanduser(path)   # 获得完整路径名
+print(fullpath)

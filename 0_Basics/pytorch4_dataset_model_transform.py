@@ -64,10 +64,11 @@ print(PtoT.min(), PtoT.max())
 
 # 如果不嵌套在Compose里边
 data.size
-t1 = transforms.ToTensor()(data)  # 
+
+t1 = transforms.ToTensor()(data)  # 转向量+转秩+转0-1
 t1.shape
-t1.max()  # 已经在totensor中归一化了
-t1.min()  # 已经在totensor中归一化了
+t1.max() 
+t1.min()
 mean=[0.485, 0.456, 0.406]
 std=[0.229, 0.224, 0.225]
 t2 = transforms.Normalize(mean, std)(t1)  # 规范化
@@ -75,10 +76,16 @@ t2.max()
 t2.min()
 
 # 反过来走一遍
-t2 = (t2.numpy() * 0.225 + 0.45).clip(min=0, max=1)  # 逆规范化
-t2.max()
-t2.min()
-t3 = transforms.ToPILImage()(t2)  # ??????
+import torch
+t3 = (t2.numpy() * 0.225 + 0.45).clip(min=0, max=1)  # 逆规范化,由于使用1个值代替3通道的mean/std所以要多一个clip截断，clip只支持numpy所以t2要先转成numpy
+t3.max()
+t3.min()
+t4 = transforms.ToPILImage()(torch.from_numpy(t3))  # 最好是输入一个tensor, 维度顺序不容易搞错: 对于t3如果是tensor必须是CxHxW, 如果是array必须是HxWxC 
+
+
+plt.imshow(t4)
+
+t8 = transforms.ToPILImage()(t1)
 
 
 transform4_2 = transforms.Compose([transforms.ToPILImage()])  # tensor转成图像- 也可直接用transpose

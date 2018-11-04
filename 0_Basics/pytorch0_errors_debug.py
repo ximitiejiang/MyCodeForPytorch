@@ -201,3 +201,19 @@ import os
 path = '~/MyDatasets/DogsVSCats/train/dog.7014.jpg'  # 待获得完整路径的目录名要以～开头
 fullpath = os.path.expanduser(path)   # 获得完整路径名
 print(fullpath)
+
+
+'''--------------------------------------------------------
+Q. 为什么在命令行运行文件报错：
+$ python demo.py example.jpg
+
+Traceback (most recent call last):
+  File "demo.py", line 10, in <module>
+    import matplotlib.pyplot as plt
+ImportError: No module named 'matplotlib'
+但相关库文件matplotlib.pyplot我已经安装，并且在ipdb单句调试都是可以的
+-----------------------------------------------------------
+'''
+# 奇葩的问题，解决方案是把运行语句的python改为用python3：
+$ python3 demo.py example.jpg
+

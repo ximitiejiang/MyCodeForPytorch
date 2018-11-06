@@ -186,6 +186,9 @@ ConnectionRefusedError: [Errno 111] Connection refused
 # 根本原因是程序里边定义了visdom的服务server,这需要在运行前启动visdom server
 python -m visdom.server
 
+# 也有用如下方式启动服务的，区别在于用的nohup python避免挂起式运行，并且&代表后台运行
+nohup python -m visdom.server &
+
 
 '''--------------------------------------------------------
 Q. 为什么原来在mac上良好运行的代码在ubuntu不能运行报错：[Errno 2] No such file or directory
@@ -203,6 +206,7 @@ fullpath = os.path.expanduser(path)   # 获得完整路径名
 print(fullpath)
 
 
+
 '''--------------------------------------------------------
 Q. 为什么在命令行运行文件报错：
 $ python demo.py example.jpg
@@ -216,4 +220,17 @@ ImportError: No module named 'matplotlib'
 '''
 # 奇葩的问题，解决方案是把运行语句的python改为用python3：
 $ python3 demo.py example.jpg
+
+
+
+'''--------------------------------------------------------
+Q. 为什么运行cuda没问题，但运行cupy的时候会报错：
+cuda driver version is insufficient to cuda runtime version?
+-----------------------------------------------------------
+'''
+# 检查了下cuda drvier version(即nvidia driver version)为384.130,
+# 而cuda9.2要求driver version >= 396.37 必须等于或者高于他所要求的drive version
+# 于是卸载当前显卡驱动，安装了410.48版本的driver version，然后正常了。
+
+
 

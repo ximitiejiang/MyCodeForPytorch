@@ -259,9 +259,51 @@ class VGG16(BasicModule):
 
         
 '''--------------------------------------------------------
-Q. 如何设计一个vgg16? 
-以下为自己改写的pytorch vgg16
+Q. 研究一个最简CNN，比如alexnet后，对nn.module, 计算输出，更新梯度，更新参数的总结？
 -----------------------------------------------------------
 '''  
+model = nn.Sequential(nn.conv2d(1,6,5,1,1),
+                      nn.conv2d(6,10,5,1,0),
+                      nn.Linear(400,120),
+                      nn.Linear(120,84),
+                      nn.Linear(84,10))
+criterion = torch.nn.CrossEntropyLoss() 
+optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
+optimizer.zero_grad()
+outputs = model(inputs)            
+loss = criterion(outputs, labels)     # 这一步有可能很复杂的扩展
+loss.backward()    # 更新梯度                     
+optimizer.step()   # 更新参数
 
+'''运行上面这个小网络的过程总结：
+1. model, sequential都是基于nn.module基类, nn.module基类的特点：
+   重写了__setattr__()：
+   重写了__getattr__()：
+   重写了__call__(): 会调用forward()，所以每一个nn.module子类都需要重写forward()函数用于实例的调用
+
+2. 添加子模型的过程：先调用__setattr__(),函数内判断是module, 则调用基类module.add_module()
+   把每个子模型都添加到_modules变量中存储起来。
+   添加过程：如果是sequential()模型，则for idx, module in enumerate(model) ...
+   如果是sequential(OrderedDict())模型，则for key, module in args[0].items ...
+
+3. 添加模型参数(w,b)的过程：先调用__setattr__()，函数内判断是Parameters,则调用register_parameters()
+   把每个参数添加到_parameters变量中存储起来
+   
+4. 所以子类继承nn.module基类的好处是：模型可自动添加到_modules统一做forward计算
+   参数可以自动添加到_parameters统一做参数更新(optimizer.step())
+
+5. 其他loss类/criterion类继承nn.module目的我的理解是沿袭更新forward()，实例化时__call__()
+   就是调用forward()的nn.module()
+
+6. 模型训练的5步法：
+    optimizer.zero_grad(): 用于梯度清零，在module的zero.grad()函数中，对_parameters中每个.grad都清零
+    outputs = model(inputs): 用forward()计算单次正向输出
+    loss = criterion(outputs, labels)：用损失函数公式计算输出损失
+    loss.backward()：更新梯度
+    optimizer.step()：更新参数
+
+7. 进一步拆解5步，实现相对小的实例！！！加hook...
+   深刻管控每步的输入输出，考虑hook的使用？考虑单步输出？
+
+'''

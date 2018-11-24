@@ -130,6 +130,7 @@ lst = [1,2]
 arr = np.array(lst)
 dic = {'a':1,'b':2}
 ten = torch.tensor(lst)
+ten1 = torch.tensor([2.])
 
 type(arr)  # 数据类型查看：适用于任何
 arr.dtype  # 元素类型查看
@@ -139,6 +140,8 @@ np.asscalar(torch.tensor(5)) # 张量转标量
 l1 = arr.tolist()            # numpy转list
 t1 = torch.from_numpy(arr)   # numpy转torch
 n1 = t1.numpy()              # torch转numpy
+
+scalar1 = ten1.item()        # 单元素tensor转标量，用.item()
 
 
 '''--------------------------------------------------------

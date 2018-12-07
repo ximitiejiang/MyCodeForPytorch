@@ -294,6 +294,27 @@ z = x[x!=0]
 
 
 '''--------------------------------------------------------
+Q. 如何对tensor进行堆叠?
+-----------------------------------------------------------
+'''
+import torch
+import numpy as np
+# array的堆叠(参考本部分前面)
+b0 = np.array([[1,2],[3,4]])
+b1 = np.array([[5,6],[7,8]])
+b2 =np.concatenate((b0,b1),axis=0)
+
+# tensor堆叠采用类似的cat()函数
+t0 = torch.tensor([1,2,3])  
+t1 = torch.tensor([4,5,6])
+t2 = torch.cat((t0,t1),-1)   # 由于tensor size = 1是一维的，也就只能进行axis=0的堆叠
+                             # 而不能进行更高维的axis =1 的操作。即使转换成array的(3,)也是一维的
+# tensor正常堆叠操作跟numpy的concatenate()一样，axis=0(行循环), axis=1(列循环)
+c0 = torch.tensor(b0)
+c1 = torch.tensor(b1)
+c2 = torch.cat((c0,c1),1)  # axis = 1为列变换方向，即列堆叠
+
+'''--------------------------------------------------------
 Q. 如何对tensor内的元素进行计算以及相关函数？
 - 基本上所有tensor都支持两类接口: t1.func(), t.func(a)，其中t1.func()这种后置式的更方便常用
 - 函数名以下划线结尾的都是inplace方式，即会修改原始tensor，比如a.zero_(), b.abs_()

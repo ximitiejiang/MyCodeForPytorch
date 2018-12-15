@@ -67,7 +67,20 @@ model = nn.Sequential(OrderedDict([
           ('relu2', nn.ReLU())
           ]))
 model.conv2
+model2 = nn.Sequential(OrderedDict(conv1 = nn.Conv2d(1,20,5),
+                                   relu1 = nn.ReLU(),
+                                   conv2 = nn.Conv2d(1,20,5),
+                                   relu2 = nn.ReLU()))
+model2.conv2
 
+# 这里再实际演示dict和ordereddict的区别
+# 两者输入方式都可以用简洁的参数输入方式，而OrderedDict还有一种复杂输入方式在pytorch中反而被推广。
+# 估计很多人并不知道OrderedDict的这种输入方式的好：少打好多引号和小括号和中括号
+from collections import OrderedDict
+import torch.nn as nn
+d1 = dict(a=1,b=2,c=3)
+o1 = OrderedDict(a=1,b=2,c=3)
+o2 = OrderedDict([('a',1),('b',2),('c',3)])  # o1和o2的定义方式等效
 
 '''--------------------------------------------------------
 Q. module定义好以后有哪些可用的属性？

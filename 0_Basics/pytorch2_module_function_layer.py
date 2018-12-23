@@ -48,7 +48,8 @@ class AAA(torch.nn.Module):
         
 net = AAA()
 
-# 创建模型方法2：默认是用list的方式存放各层，调用各层就是对list切片
+# 创建模型方法2：nn.Sequential() 自动为各层编号(从0开始)
+# 调用方式：model[0]
 model = nn.Sequential(
           nn.Conv2d(1,20,5),
           nn.ReLU(),
@@ -58,7 +59,9 @@ model = nn.Sequential(
 for i in range(len(model)):
     print(model[i])
 
-# 创建模型方法3: 优点是对模型取名存成字典，调用各层就是对dict切片
+# 创建模型方法3: nn.Sequential(OrderedDict([('conv1',nn.Conv2d(1,20,5)),('relu1', nn.ReLU())]))
+# 也可写成： nn.Sequential(OrderedDict(conv1=nn.Conv2d(1,20,5),relu1=nn.ReLU()))
+# 调用方式：model.conv1
 from collections import OrderedDict
 model = nn.Sequential(OrderedDict([
           ('conv1', nn.Conv2d(1,20,5)),
@@ -72,6 +75,13 @@ model2 = nn.Sequential(OrderedDict(conv1 = nn.Conv2d(1,20,5),
                                    conv2 = nn.Conv2d(1,20,5),
                                    relu2 = nn.ReLU()))
 model2.conv2
+
+# 创建模型方法3：nn.ModuleList()
+# 调用方式：module_list
+module_list = nn.ModuleList()
+modules = nn.Sequential()
+modules.add_module('conv2d', nn.Conv2d(1,20,5))
+module_list.append(modules)
 
 # 这里再实际演示dict和ordereddict的区别
 # 两者输入方式都可以用简洁的参数输入方式，而OrderedDict还有一种复杂输入方式在pytorch中反而被推广。

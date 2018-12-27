@@ -41,6 +41,9 @@ d.keys()
 d.values()
 d.items()
 
+d = dict(a=2,b=3)  # 最简单的dict创建方法
+d.update(c=4)      # 最简单的dict添加元素方法
+
 '''--------------------------------------------------------
 Q2. 获得list/array的尺寸
 ------------------------------------------------------------
@@ -176,17 +179,60 @@ np.random.randn(1)       # 如果之前有seed, 产生的随机数都相同
 
 '''--------------------------------------------------------
 Q4. 如何进行堆叠和展平？
+核心概念：
+    1. concatenate, stack只能输入array，不能输入list，而torch.cat可以输入list/array
+    2. concatenate通常用于处理二维数据，且size尺寸可以不同，虽然能够处理1维但只能一维扁平堆叠
+    3. stack通常用于处理一维，且在一维数据下也能axis=0/1两个方向，且自动输出升为2维。虽然能够处理2维但要求输入size相同。
+    4. 一般来说：一维数据用stack处理(胜在两个axis都可操作)，二维以上用concatenate(胜在不同size也能堆叠)
+       一般来说：普通数据用stack/concatenate，tensor数据用cat(tensor的一维没有stack稍微不方便)
 ------------------------------------------------------------
 '''
+# 展平
 a = np.array([[2,1,4,5],[4,2,7,1]])
 a.ravel()     # 在原数据上直接展平
 a.flatten()   # 展平，但不影响原数据
-
+# concatenate堆叠
 b0=np.array([[1,2],[3,4]])
 b1=np.array([[5,6],[7,8]])
-np.concatenate((b0,b1),axis=0)  # 最核心常用的堆叠命令(axis可以控制堆叠方向)
-# 另外还有几个堆叠命令 np.hstack(), np.vstack(), np.stack()
+b3=np.concatenate((b0,b1),axis=0)  # 最核心常用的堆叠命令(axis可以控制堆叠方向)
 
+d0 = np.array([1,2,3])
+d1 = np.array([4,5,6])
+d3 = np.concatenate((d0,d1),axis=-1)
+
+
+c0=np.array([[1,2],[3,4]])
+c1=np.array([[5,6]])
+c2=np.array([[5,6],[7,8]])
+c3=np.concatenate((c0,c1),axis=0)  # 堆叠的数据可以是不同size的，但要保证空间上摆放的对应维度相同
+                                   # 或者要理解成拼接维度不同，但其他维度都要相同：axis=1方向维度不同，但axis=0/2/..n维度要相同
+c4=np.concatenate((c0,c1),axis=1)  # 报错！ 因为(2,2)与(1,2)如果在axis=1拼接，axis=0的维度需要相同。这种低维的肉眼也能看出来axis=1方向摆放不成
+c5=np.concatenate((c0,c2),axis=1)  # ok
+# stack堆叠
+a0 = np.array([1,2,3])
+a1 = np.array([4,5,6])
+
+a2 = np.stack((a0,a1),axis=0)   # stack()可以用于一维数据的多轴操作，且自动完成升维
+a3 = np.stack((a0,a1),axis=1)  #stack多轴都可操作，自动升维
+
+b0 = np.array([[1,2],[3,4]])  
+b1 = np.array([[5,6],[7,8]])
+
+# stack处理多维
+b2 = np.stack((b0,b1),axis=0)  # 原来(2,2)升维到(1,2,2), 两个(1,2,2)的axis=0轴堆叠成(2,2,2)
+b3 = np.stack((b0,b1),axis=1)  # 原来(2,2)升维到(2,1,2)，两个(2,1,2)的axis=1轴堆叠成(2,2,2)
+b4 = np.stack((b0,b1),axis=2)  # 原来(2,2)升维到(2,2,1)，两个(2,2,1)的axis=2轴堆叠成(2,2,2)
+
+
+d0 = np.array([[1,2,3],[4,5,6]])
+d1 = np.array([[1,2,3],[4,5,6]])
+d2 = np.array([[1,2,3],[4,5,6]])
+d4 = np.stack((d0,d1,d2), axis=0)  # (2,3)升维到(1,2,3),再在axis=0方向concatenate成(3,2,3)
+d5 = np.stack((d0,d1,d2), axis=1)  # (2,3)升维到(2,1,3),再在axis=1方向concatenate成(2,3,3)
+d6 = np.stack((d0,d1,d2), axis=2)  # (2,3)升维到(2,3，1),再在axis=2方向concatenate成(2,3,3)
+
+d7 = np.concatenate((d0,d1,d2), axis=0)  # 不升维，直观在行方向上组合
+d8 = np.concatenate((d0,d1,d2), axis=1)  # 不升维，直观在列方向上组合
 
 '''--------------------------------------------------------
 Q4. 如何调整列顺序和如何调整维度顺序？
@@ -194,8 +240,8 @@ Q4. 如何调整列顺序和如何调整维度顺序？
 '''
 # 调整列顺序：有个非常简单的技巧
 a = np.array([[1,2,3],[4,5,6]])
-a[(1,2,0),:]  # 把1,2列提前，0列放最后。很重要的技巧，还没发现其他实现类似功能的简洁方法
-
+b=a[(1,0),:]  # 把1行提前，0行放最后。很重要的技巧，还没发现其他实现类似功能的简洁方法
+c=a[:,(1,0,2)]  #
 # 调整维度顺序：套用公式，与调整列顺序方法居然异曲同工
 np.random.seed(1)
 b = np.random.randn(2,3,4)
@@ -204,18 +250,47 @@ c = b.transpose(1,2,0)   # 把维度1,维度2提前，维度0放最后
 d = torch.from_numpy(b).permute(1,2,0)  # permute()功能跟transpose一致，但只适用于tensor
 c.shape  
 
+import torch
+t1 = torch.tensor([[[1,2,3],[4,5,6],[7,8,9]]])  # (1,3,3)
+t2 = t1.transpose(1,2,0)                        # 报错
+t3 = t1.permute(1,2,0)                          # (3,3,1)
+t4 = t1.reshape(3,3,1)
+
 
 '''--------------------------------------------------------
 Q4. 如何改变tensor维度？
 ------------------------------------------------------------
 '''
-a = torch.tensor([1,2,3,4,5,6])
-b = a.reshape(2,3)  # 变维度，可用于array/tensor...
-b = a.view(-1,1)    # 变维度，只能用于tensor
+a0 = torch.tensor([1,2,3,4,5,6])
+a1 = a0.reshape(2,3)  # 变维度，可用于array/tensor...
+a2 = a0.view(-1,1)    # 变维度，只能用于tensor
+
+b0 = torch.tensor([[1,2,3],[4,5,6]])
+b1 = b0.reshape(3,2)  # 对多维变维度
 
 c = a.unsqueeze(0)  # 增加第0维度
 d = c.squeeze(0)    # 挤掉第0维度
 
+e0 = torch.tensor([[1,2,3],[4,5,6]])  # size = (2,3)
+e1 = e0.unsqueeze(0)                  # size = (1,2,3) 1层2行3列
+e2 = e0.unsqueeze(1)                  # size = (2,1,3) 2层1行3列
+e3 = e0.unsqueeze(2)                  # size = (2,3,1) 2层3行1列
+print(e0.reshape(1,-1))
+print(e1.reshape(1,-1))
+print(e2.reshape(1,-1))
+print(e3.reshape(1,-1))
+
+f1 = e0.squeeze(0)
+
+h1 = [1,2,3]
+len(h1)
+h2 = [[1,2],[3,4]]
+len(h2)
+
+g1 = np.array([1,2,3])
+g1.shape
+g2 = np.array([[1,2],[3,4]])
+g2.shape
 
 
 
@@ -301,19 +376,35 @@ import torch
 import numpy as np
 # array的堆叠(参考本部分前面)
 b0 = np.array([[1,2],[3,4]])
-b1 = np.array([[5,6],[7,8]])
+b1 = np.array([[5,6]])
 b2 =np.concatenate((b0,b1),axis=0)
 
+# -----------------一维堆叠----------------
 # tensor堆叠采用类似的cat()函数
 t0 = torch.tensor([1,2,3])  
 t1 = torch.tensor([4,5,6])
-t2 = torch.cat((t0,t1),-1)   # 由于tensor size = 1是一维的，也就只能进行axis=0的堆叠
-                             # 而不能进行更高维的axis =1 的操作。即使转换成array的(3,)也是一维的
-# tensor正常堆叠操作跟numpy的concatenate()一样，axis=0(行循环), axis=1(列循环)
-c0 = torch.tensor(b0)
-c1 = torch.tensor(b1)
-c2 = torch.cat((c0,c1),1)  # axis = 1为列变换方向，即列堆叠
+t2 = torch.cat((t0,t1),-1)   # 由于tensor size是一维的，也就只能平面堆叠，axis=0/-1效果一样
+                             # 虽然类似axis=1的堆叠但其实是扁平堆叠                            
+t3 = torch.tensor(np.array([1,2,3]))
+t4 = torch.tensor(np.array([4,5,6]))
+t5 = torch.cat((t3,t4),0)    # 用array的一维数据，同样只能平面堆叠， axis=0/-1效果一样
 
+t6 = torch.tensor([[1,2,3]])
+t7 = torch.tensor([[4,5,6]])
+t8 = torch.cat((t6,t7),1)    # 二维堆叠，axis=0/1/...都可以实现
+
+# tensor正常堆叠操作跟numpy的concatenate()一样，axis=0(行循环), axis=1(列循环)
+c0 = torch.tensor([[1,2],[3,4]])
+c1 = torch.tensor([[5,6]])
+c2 = torch.tensor([[5,6],[7,8]])
+c3 = torch.cat((c0,c1),0)  # axis = 1为列变换方向，即列堆叠
+c4 = torch.cat((c0,c1),1)  # 报错
+
+# torch.stack的堆叠
+d3 = torch.stack((t0,t1),0)  # 一维堆叠
+d4 = torch.stack((t0,t1),1)  # 一维堆叠
+d5 = torch.stack((c0,c2),0)  # 二维会升维度，0就变成层了
+d6 = torch.stack((c0,c2),1)  #
 
 '''--------------------------------------------------------
 Q. 如何对tensor广播式堆叠相加/相乘
